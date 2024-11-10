@@ -10,9 +10,9 @@
   ],
   "background": {
     "scripts": [
-      "dist/background.js"
+      "background.js"
     ],
-    "persistent": true
+    "persistent": false
   },
   "content_scripts": [
     {
