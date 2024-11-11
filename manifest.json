@@ -1,6 +1,6 @@
 {
   "manifest_version": 2,
-  "name": "Vivino Rating for Systembolaget",
+  "name": "Ratings for Systembolaget",
   "version": "1.0",
   "permissions": [
     "activeTab",
@@ -10,9 +10,9 @@
   ],
   "background": {
     "scripts": [
-      "background.js"
+      "dist/background.js"
     ],
-    "persistent": false
+    "persistent": true
   },
   "content_scripts": [
     {
@@ -30,9 +30,9 @@
   },
   "browser_specific_settings": {
     "gecko": {
-      "id": "vivino-rating-systembolaget@mydomain.com",
+      "id": "ratings-systembolaget@mydomain.com",
       "strict_min_version": "109.0"
     }
   },
-  "content_security_policy": "default-src 'none'"
+  "content_security_policy": "script-src 'self'; object-src 'self'; connect-src 'self' https://www.vivino.com"
 }
