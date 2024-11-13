@@ -50,39 +50,8 @@ async function fetchRatingFromVivino(query: string): Promise<string | null> {
   return null;
 }
 
-browser.runtime.onMessage.addListener(
-  async (message: unknown, _sender, sendResponse): Promise<boolean> => {
-    // Type guard to ensure message is of type VivinoMessage
-    if (
-      typeof message === 'object' &&
-      message !== null &&
-      'query' in message &&
-      'productName' in message
-    ) {
-      const { query, productName } = message as VivinoMessage;
+browser.runtime.onMessage.addListener(async () => {
+  var x = await fetchRatingFromVivino("19 crimes");
+  return x;
+});
 
-      if (query === 'getRating') {
-        console.log('GET RATING!');
-        try {
-          const rating = await fetchRatingFromVivino(productName);
-          if (rating == null) {
-            console.error('Rating is null');
-          }
-
-          if (!rating || rating == undefined || rating == null)
-            console.warn('Rating is weird:', rating);
-
-          sendResponse({ rating });
-        } catch (error) {
-          console.error('Failed to fetch rating:', error);
-          sendResponse({ rating: 'N/A' });
-        }
-      }
-    } else {
-      console.error('Invalid message format received:', message);
-      sendResponse({ rating: 'Invalid message' });
-    }
-
-    return true;
-  }
-);

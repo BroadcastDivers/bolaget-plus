@@ -9,12 +9,9 @@ const insertOnProdcutPage = async (elTrigger: any) => {
   // const sbName2 = document.querySelector('main h1')?.textContent?.trim();
   // alert(`sbName2: ${sbName2}`);
 
-  const sbNameElements = document.querySelectorAll('main h1 p');
-  let sbName3 = '';
-  sbNameElements.forEach((element) => {
-    sbName3 += element.textContent + ' ';
-  });
-  sbName3 = sbName3.trim();
+  const sbNameElements = document.querySelector('main h1 p');
+  let sbName3 = sbNameElements?.textContent;
+
 
   if (!sbName3 || sbName3 == '') return;
 
@@ -73,14 +70,16 @@ const insertOnProdcutPage = async (elTrigger: any) => {
   }
 })();
 
-function fetchVivinoRating(productName: string): Promise<string | null> {
+function fetchVivinoRating(productName: string): Promise<any | null> {
   console.log('calling fetchVivinoRating');
   return new Promise((resolve) => {
     browser.runtime
       .sendMessage({ query: 'getRating', productName })
       .then((response) => {
         console.log(`response ${response}`);
-        resolve((response as VivinoResponse)?.rating ?? null);
+        resolve(response);
+        // resolve((response as VivinoResponse)?.rating ?? null);
+        console.log()
       })
       .catch((error) => {
         console.error(`Failed to get rating for ${productName}:`, error);
@@ -88,3 +87,10 @@ function fetchVivinoRating(productName: string): Promise<string | null> {
       });
   });
 }
+
+
+//
+// browser.runtime.onMessage.addListener(
+//   async (message: unknown, _sender, _response) => {
+//     console.log(message);
+//   });
