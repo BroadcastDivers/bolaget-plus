@@ -1,0 +1,44 @@
+/* Styling for the popup */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #007a33; /* Main color */
+  color: #fff;
+}
+
+.popup-container {
+  padding: 16px;
+  max-width: 250px;
+}
+
+h2 {
+  color: #ffd400; /* Secondary color */
+  font-size: 1.2em;
+  margin-bottom: 16px;
+}
+
+.toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+label {
+  font-size: 1em;
+  color: #ffd400; /* Secondary color */
+}
+
+input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  accent-color: #ffd400; /* Secondary color */
+  cursor: pointer;
+  outline: none;
+  border: none;
+}
+
+input[type='checkbox']:hover {
+  filter: brightness(1.2);
+}
