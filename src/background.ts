@@ -1,18 +1,22 @@
 import * as cheerio from 'cheerio';
-import browser from "webextension-polyfill";
+import browser from 'webextension-polyfill';
 
-console.log("background script initialized");
-async function fetchRatingFromVivino(query: string): Promise<string> {
-  const url = `https://www.vivino.com/search/wines?q=${encodeURIComponent(query)}`;
+console.log('background script initialized');
+async function fetchRatingFromVivino(query: string): Promise<string | null> {
+  const url = `https://www.vivino.com/search/wines?q=${encodeURIComponent(
+    query
+  )}`;
 
   try {
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
-      }
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
+      },
     });
 
     if (!response.ok) {
+      console.error(`Failed to fetch: ${response.statusText}`);
       throw new Error(`Failed to fetch: ${response.statusText}`);
     }
 
@@ -23,10 +27,18 @@ async function fetchRatingFromVivino(query: string): Promise<string> {
     const wineCard = $('.default-wine-card').first();
 
     // Extracting average rating
-    const averageRating = wineCard.find('.average__container .average__number').first().text().trim();
+    const averageRating = wineCard
+      .find('.average__container .average__number')
+      .first()
+      .text()
+      .trim();
 
     // Extracting number of ratings
-    const numberOfRatings = wineCard.find('.average__stars .text-micro').first().text().trim();
+    const numberOfRatings = wineCard
+      .find('.average__stars .text-micro')
+      .first()
+      .text()
+      .trim();
 
     console.log(`Average Rating: ${averageRating}`);
     console.log(`Number of Ratings: ${numberOfRatings}`);
@@ -35,36 +47,42 @@ async function fetchRatingFromVivino(query: string): Promise<string> {
   } catch (error) {
     console.error('Error:', error);
   }
-  return '';
+  return null;
 }
 
-
 browser.runtime.onMessage.addListener(
-  async (message: unknown, _sender, sendResponse): Promise<void> => {
+  async (message: unknown, _sender, sendResponse): Promise<boolean> => {
     // Type guard to ensure message is of type VivinoMessage
     if (
-      typeof message === "object" &&
+      typeof message === 'object' &&
       message !== null &&
-      "query" in message &&
-      "productName" in message
+      'query' in message &&
+      'productName' in message
     ) {
       const { query, productName } = message as VivinoMessage;
 
-      console.log("GET RATING!");
-      if (query === "getRating") {
+      if (query === 'getRating') {
+        console.log('GET RATING!');
         try {
           const rating = await fetchRatingFromVivino(productName);
+          if (rating == null) {
+            console.error('Rating is null');
+          }
+
+          if (!rating || rating == undefined || rating == null)
+            console.warn('Rating is weird:', rating);
+
           sendResponse({ rating });
         } catch (error) {
-          console.error("Failed to fetch rating:", error);
-          sendResponse({ rating: "N/A" });
+          console.error('Failed to fetch rating:', error);
+          sendResponse({ rating: 'N/A' });
         }
       }
     } else {
-      console.error("Invalid message format received:", message);
-      sendResponse({ rating: "Invalid message" });
+      console.error('Invalid message format received:', message);
+      sendResponse({ rating: 'Invalid message' });
     }
 
-    return;
+    return true;
   }
 );
