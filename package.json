@@ -28,6 +28,9 @@
   },
   "dependencies": {
     "cheerio": "^1.0.0",
-    "node-fetch": "^3.3.2"
+    "node-fetch": "^3.3.2",
+    "pnpm": "^9.13.0",
+    "sentinel-js": "^0.0.7",
+    "vite": "^5.4.11"
   }
 }
