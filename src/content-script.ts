@@ -3,94 +3,70 @@
 import browser from 'webextension-polyfill';
 import sentinel from 'sentinel-js';
 
-const insertOnProdcutPage = async (elTrigger: any) => {
-  // Systembolaget Data
-  // const sbName = document.querySelector('main h1')?.innerHTML.trim();
-  // const sbName2 = document.querySelector('main h1')?.textContent?.trim();
-  // alert(`sbName2: ${sbName2}`);
-
-  const sbNameElements = document.querySelector('main h1 p');
-  let sbName3 = sbNameElements?.textContent;
-
-
-  if (!sbName3 || sbName3 == '') return;
-
-  console.log(`sbName3: ${sbName3}`);
-
-  // const sbType = document
-  //   .querySelector('main h4')
-  //   ?.parentElement?.parentElement?.innerText.trim();
-  // if (sbType !== '' && sbType !== null && sbType !== undefined) {
-  //   console.log(`sbType: ${sbType}`);
-  // }
-  // productName = sbName ?? '';
-
-  try {
-    const rating = await fetchVivinoRating(sbName3);
-    if (rating) {
-      console.log('rating!');
-      console.log(rating);
-    }
-  } catch (error) {
-    console.error(`Error fetching rating for ${sbName3}:`, error);
-  }
-};
+let fetchingRatingInProgress = false;
 
 (async () => {
-  // const observer = new IntersectionObserver((entries, observer) => {
-  //   entries.forEach((entry) => {
-  //     console.log(entry);
-  //     if (entry.isIntersecting) {
-  //       console.log('Element is in view');
-  //       observer.disconnect();
-  //     }
-  //   });
-  // });
+  const winePageSelector = 'h1';
+  sentinel.on(winePageSelector, insertOnProdcutPage);
+})();
 
-  let productName = '';
+function getProductName(): string | null {
+  let header = document.querySelector('main h1')?.children;
 
-  const wineUrl = location.href.includes('/produkt/vin/');
-  if (wineUrl) {
-    const winePageSelector = 'h3';
-    sentinel.on(winePageSelector, insertOnProdcutPage);
+  if (!header || header.length === 0) {
+    return null;
   }
 
-  if (!productName || productName === '') {
-    console.log('No product name found');
+  const firstLine = (header[0] as HTMLElement).innerText.trim();
+  if (header.length === 1) {
+    return firstLine;
+  }
+
+  var secondLine = (header[1] as HTMLElement).innerText;
+  const lastCommaIndex = secondLine.lastIndexOf(',');
+
+  // Check if a comma was found and slice the string accordingly
+  secondLine = lastCommaIndex !== -1 ? secondLine.slice(0, lastCommaIndex) : secondLine;
+
+  return `${firstLine} ${secondLine}`;
+}
+
+async function insertOnProdcutPage(_: any) {
+  if (fetchingRatingInProgress) {
     return;
   }
+
+  const wineUrl = location.href.includes('/produkt/vin/');
+  if (!wineUrl) {
+    return;
+  }
+
+  fetchingRatingInProgress = true;
+  const productName = getProductName();
+  if (!productName) {
+    return;
+  }
+
   try {
+    console.log(`Calling to search for: ${productName}`)
     const rating = await fetchVivinoRating(productName);
     if (rating) {
-      console.log('rating!');
       console.log(rating);
     }
   } catch (error) {
     console.error(`Error fetching rating for ${productName}:`, error);
   }
-})();
+  finally {
+    fetchingRatingInProgress = false;
+  }
+};
 
-function fetchVivinoRating(productName: string): Promise<any | null> {
-  console.log('calling fetchVivinoRating');
-  return new Promise((resolve) => {
-    browser.runtime
-      .sendMessage({ query: 'getRating', productName })
-      .then((response) => {
-        console.log(`response ${response}`);
-        resolve(response);
-        // resolve((response as VivinoResponse)?.rating ?? null);
-        console.log()
-      })
-      .catch((error) => {
-        console.error(`Failed to get rating for ${productName}:`, error);
-        resolve(null);
-      });
-  });
+async function fetchVivinoRating(productName: string): Promise<any | null> {
+  try {
+    const response = await browser.runtime.sendMessage({ query: 'getRating', productName });
+    return response;
+  } catch (error) {
+    console.error(`Failed to get rating for ${productName}:`, error);
+    return null;
+  }
 }
-
-
-//
-// browser.runtime.onMessage.addListener(
-//   async (message: unknown, _sender, _response) => {
-//     console.log(message);
-//   });

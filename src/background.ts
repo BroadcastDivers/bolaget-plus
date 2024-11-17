@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio';
 import browser from 'webextension-polyfill';
+import { VivinoMessage } from './types';
 
 console.log('background script initialized');
 async function fetchRatingFromVivino(query: string): Promise<string | null> {
@@ -26,6 +27,10 @@ async function fetchRatingFromVivino(query: string): Promise<string | null> {
     // Extracting wine card elements
     const wineCard = $('.default-wine-card').first();
 
+    const name = wineCard.find('.wine-card__name')
+    .first()
+    .text()
+    .trim();
     // Extracting average rating
     const averageRating = wineCard
       .find('.average__container .average__number')
@@ -40,18 +45,32 @@ async function fetchRatingFromVivino(query: string): Promise<string | null> {
       .text()
       .trim();
 
+      
+    const linkElement = wineCard.find('a[data-cartitemsource="text-search"]').first();
+    const link = new URL(`https://www.vivino.com/${linkElement.attr('href')}`);
+
+    console.log(`Wine name: ${name}`);
     console.log(`Average Rating: ${averageRating}`);
     console.log(`Number of Ratings: ${numberOfRatings}`);
+    console.log(`Link ${link}`);
 
-    return averageRating;
+    return averageRating; // TODO: return more data
   } catch (error) {
     console.error('Error:', error);
   }
   return null;
 }
 
-browser.runtime.onMessage.addListener(async () => {
-  var x = await fetchRatingFromVivino("19 crimes");
-  return x;
+browser.runtime.onMessage.addListener(async (message) => {
+  if (
+    typeof message === "object" &&
+    message !== null &&
+    "query" in message &&
+    "productName" in message
+  ) {
+    const { query, productName } = message as VivinoMessage;
+
+    return await fetchRatingFromVivino(productName);
+  }
 });
 
