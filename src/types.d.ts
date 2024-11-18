@@ -6,8 +6,8 @@ interface VivinoMessage {
 }
 
 interface VivinoResponse {
-  name: string;
-  rating: string;
-  votes: int
-  link: URL
+  name: string?;
+  rating: float?;
+  votes: int?;
+  link: string?;
 }

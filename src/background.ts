@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import browser from 'webextension-polyfill';
-import { VivinoMessage } from './types';
+import { VivinoMessage, VivinoResponse } from './types';
 
 console.log('background script initialized');
 async function fetchRatingFromVivino(query: string): Promise<string | null> {
@@ -17,7 +17,6 @@ async function fetchRatingFromVivino(query: string): Promise<string | null> {
     });
 
     if (!response.ok) {
-      console.error(`Failed to fetch: ${response.statusText}`);
       throw new Error(`Failed to fetch: ${response.statusText}`);
     }
 
@@ -32,29 +31,29 @@ async function fetchRatingFromVivino(query: string): Promise<string | null> {
     .text()
     .trim();
     // Extracting average rating
-    const averageRating = wineCard
+    const ratingRaw = wineCard
       .find('.average__container .average__number')
       .first()
       .text()
-      .trim();
+      .trim()
+      .replace(',', '.');
 
+    const rating = ratingRaw !== "-" ? Number.parseFloat(ratingRaw) : null;
     // Extracting number of ratings
-    const numberOfRatings = wineCard
+    const votesRaw = wineCard
       .find('.average__stars .text-micro')
       .first()
       .text()
       .trim();
 
+    const votes = votesRaw.includes(" ratings") ? Number.parseInt(votesRaw.split(" ")[0]) : null;
       
     const linkElement = wineCard.find('a[data-cartitemsource="text-search"]').first();
-    const link = new URL(`https://www.vivino.com/${linkElement.attr('href')}`);
+    const link = `https://www.vivino.com/${linkElement.attr('href')}`;
 
-    console.log(`Wine name: ${name}`);
-    console.log(`Average Rating: ${averageRating}`);
-    console.log(`Number of Ratings: ${numberOfRatings}`);
-    console.log(`Link ${link}`);
-
-    return averageRating; // TODO: return more data
+    const vivinoResponse = {name, link, rating, votes } as VivinoResponse;
+    console.log(vivinoResponse);
+    return JSON.stringify(vivinoResponse);
   } catch (error) {
     console.error('Error:', error);
   }
@@ -68,7 +67,7 @@ browser.runtime.onMessage.addListener(async (message) => {
     "query" in message &&
     "productName" in message
   ) {
-    const { query, productName } = message as VivinoMessage;
+    const { productName } = message as VivinoMessage;
 
     return await fetchRatingFromVivino(productName);
   }
