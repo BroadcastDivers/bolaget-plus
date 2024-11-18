@@ -131,7 +131,7 @@ function generateStarsSvg(rating: number): string {
           <defs>
             <linearGradient id="halfStarGradient">
               <stop offset="50%" stop-color="${redColor}" />
-              <stop offset="50%" stop-color="transparent" />
+              <stop offset="50%" stop-color="${grayColor}" />
             </linearGradient>
           </defs>
           <path d="M12 .587l3.668 7.568L24 9.423l-6 5.832 1.416 8.25L12 18.897 4.584 23.505 6 15.255l-6-5.832 8.332-1.268L12 .587z" fill="url(#halfStarGradient)"/>
