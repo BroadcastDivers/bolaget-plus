@@ -10,7 +10,7 @@ let fetchingRatingInProgress = false;
 })();
 
 async function tryInsertOnProdcutPage(_: any) {
-  if (fetchingRatingInProgress || !location.href.includes('/produkt/vin/') ) {
+  if (fetchingRatingInProgress || !location.href.includes('/produkt/vin/')) {
     return;
   }
 
@@ -27,10 +27,9 @@ async function tryInsertOnProdcutPage(_: any) {
   }
 
   try {
-    const rating = await fetchVivinoRating(productName);
-    if (rating) {
-      insertVivinoHtmlElement(rating);
-    }
+    insertVivinoHtmlElement(null);
+    const response = await fetchVivinoRating(productName);
+    response?.name ? insertVivinoHtmlElement(response) : insertVivinoHtmlElement(null, "❌ Ingen träff hos Vivino");
   } catch (error) {
     console.error(`Error fetching rating for ${productName}:`, error);
   }
@@ -70,9 +69,12 @@ async function fetchVivinoRating(productName: string): Promise<VivinoResponse | 
   }
 }
 
+// TODO: Clean and split this
 function insertVivinoHtmlElement(wine: VivinoResponse | null, message?: string) {
-  document.getElementById("vivino-rating-container")?.remove()
+  const existingContainer = document.getElementById("vivino-rating-container");
+  if (existingContainer) existingContainer.remove(); // Remove any previous result container
 
+  // Create the container
   const ratingContainer = document.createElement('div');
   ratingContainer.id = 'vivino-rating-container';
   ratingContainer.style.cssText = `
@@ -86,7 +88,27 @@ function insertVivinoHtmlElement(wine: VivinoResponse | null, message?: string) 
   `;
 
   const header = '<h3 style="color: #856404; text-align: center;">Systembolaget ratings</h3>';
-  if (wine) {
+
+  if (message) {
+    // If there's a message (like error or fallback), show it
+    ratingContainer.innerHTML = `
+      ${header}
+      <div style="color: #856404; text-align: center;">
+        ${message}
+      </div>
+    `;
+  }
+  else if (!wine) {
+    injectSpinnerCSS();
+    ratingContainer.innerHTML = `
+      ${header}
+      <div style="display: flex; justify-content: center; align-items: center; height: 50px; gap: 10px;">
+        <div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #095741; border-radius: 50%; width: 30px; height: 30px; animation: spin 2s linear infinite;"></div>
+        <span style="font-size: 14px; color: #856404;">Hämtar Vivino betyg...</span>
+      </div>
+    `;
+  } else if (wine) {
+    // Show rating if data is available
     ratingContainer.innerHTML = `
       ${header}
       <div style="display: flex; align-items: center; gap: 5px;">
@@ -97,21 +119,29 @@ function insertVivinoHtmlElement(wine: VivinoResponse | null, message?: string) 
         Länk till Vivino
       </a>
     `;
-  } else if (message) {
-    ratingContainer.innerHTML = `
-      ${header}
-      <div style="color: #856404; text-align: center;">
-        ${message}
-      </div>
-    `;
   }
 
+  // Insert the container into the page
   const productHeader = document.querySelector('main h1');
   if (productHeader && productHeader.parentNode) {
     productHeader.parentNode.insertBefore(ratingContainer, productHeader.nextSibling);
   }
 }
 
+// Function to inject the spinner CSS if it's not already in the document
+function injectSpinnerCSS() {
+  if (!document.getElementById('spinner-css')) {
+    const style = document.createElement('style');
+    style.id = 'spinner-css';
+    style.innerHTML = `
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+}
 function generateStarsSvg(rating: number): string {
   const maxStars = 5;
   const redColor = '#dc3545'; // Red color for the stars
