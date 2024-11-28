@@ -8,7 +8,7 @@ let fetchingRatingInProgress = false;
 
 (async () => {
   const winePageSelector = 'h1';
-  sentinel.on(winePageSelector, insertOnProdcutPage);
+  sentinel.on(winePageSelector, tryInsertOnProdcutPage);
 })();
 
 function getProductName(): string | null {
@@ -32,13 +32,18 @@ function getProductName(): string | null {
   return `${firstLine} ${secondLine}`;
 }
 
-async function insertOnProdcutPage(_: any) {
+async function tryInsertOnProdcutPage(_: any) {
   if (fetchingRatingInProgress) {
     return;
   }
 
   const wineUrl = location.href.includes('/produkt/vin/');
   if (!wineUrl) {
+    return;
+  }
+
+  if (!isBottle()) {
+    console.log("Product is not a bottle")
     return;
   }
 
@@ -143,4 +148,17 @@ function generateStarsSvg(rating: number): string {
   }
 
   return `<div style="display: flex;">${starsHtml}</div>`;
+}
+
+function isBottle(): boolean {
+  const container = document.querySelector("main")
+  if (container === null) {
+    return false;
+  }
+
+  const isBottle = Array.from(container.querySelectorAll('p')).find(
+    (p) => p !== null && p.textContent?.includes('flaska')
+  );
+
+  return isBottle !== undefined
 }
