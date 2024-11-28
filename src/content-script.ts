@@ -134,8 +134,8 @@ function generateStarsSvg(rating: number): string {
 }
 
 function isBottle(): boolean {
-  const container = document.querySelector("main")
-  if (container === null) {
+  const container = document.querySelector("main h1")?.parentElement?.parentElement
+  if (container == null) {
     return false;
   }
 
