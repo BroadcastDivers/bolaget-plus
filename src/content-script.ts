@@ -11,53 +11,21 @@ let fetchingRatingInProgress = false;
   sentinel.on(winePageSelector, tryInsertOnProdcutPage);
 })();
 
-function getProductName(): string | null {
-  let header = document.querySelector('main h1')?.children;
-
-  if (!header || header.length === 0) {
-    return null;
-  }
-
-  const firstLine = (header[0] as HTMLElement).innerText.trim();
-  if (header.length === 1) {
-    return firstLine;
-  }
-
-  var secondLine = (header[1] as HTMLElement).innerText;
-  const lastCommaIndex = secondLine.lastIndexOf(',');
-
-  // Check if a comma was found and slice the string accordingly
-  secondLine = lastCommaIndex !== -1 ? secondLine.slice(0, lastCommaIndex) : secondLine;
-
-  return `${firstLine} ${secondLine}`;
-}
-
 async function tryInsertOnProdcutPage(_: any) {
-  if (fetchingRatingInProgress) {
-    return;
-  }
-
-  const wineUrl = location.href.includes('/produkt/vin/');
-  if (!wineUrl) {
-    return;
-  }
-
-  if (!isBottle()) {
-    console.log("Product is not a bottle")
+  if (fetchingRatingInProgress || !location.href.includes('/produkt/vin/') || !isBottle()) {
     return;
   }
 
   fetchingRatingInProgress = true;
   const productName = getProductName();
   if (!productName) {
+    console.warn("Failed to extract product name.");
     return;
   }
 
   try {
-    console.log(`Calling to search for: ${productName}`)
     const rating = await fetchVivinoRating(productName);
     if (rating) {
-      console.log(rating);
       insertRatingIntoPage(rating);
     }
   } catch (error) {
@@ -68,16 +36,33 @@ async function tryInsertOnProdcutPage(_: any) {
   }
 };
 
+function getProductName(): string | null {
+  const headerChildren = document.querySelector('main h1')?.children;
+
+  if (!headerChildren || headerChildren.length === 0) {
+    return null;
+  }
+
+  const firstLine = (headerChildren[0] as HTMLElement)?.innerText.trim() ?? '';
+  if (headerChildren.length === 1) {
+    return firstLine;
+  }
+
+  const secondLine = (headerChildren[1] as HTMLElement)?.innerText.trim() ?? '';
+  const secondLineWithoutComma = secondLine.includes(',')
+    ? secondLine.slice(0, secondLine.lastIndexOf(',')).trim()
+    : secondLine;
+
+  return `${firstLine} ${secondLineWithoutComma}`.trim();
+}
+
+
 async function fetchVivinoRating(productName: string): Promise<VivinoResponse | null> {
   try {
     const response = await browser.runtime.sendMessage({ query: 'getRating', productName });
-    if (typeof (response) !== 'string') {
-      return null;
-    }
-
-    return JSON.parse(response) as VivinoResponse
+    return typeof response === 'string' ? (JSON.parse(response) as VivinoResponse) : null;
   } catch (error) {
-    console.error(`Failed to get rating for ${productName}:`, error);
+    console.error(`Failed to fetch rating for ${productName}:`, error);
     return null;
   }
 }
@@ -95,7 +80,6 @@ function insertRatingIntoPage(wine: VivinoResponse) {
     font-size: 14px;
   `;
 
-  // Set the inner HTML content
   ratingContainer.innerHTML = `
     <div style="display: flex; align-items: center; gap: 5px;">
       <strong>Vivino betyg:</strong>
@@ -106,7 +90,6 @@ function insertRatingIntoPage(wine: VivinoResponse) {
     </a>
   `;
 
-  // Insert the ratingContainer into the product page, below the main header
   const productHeader = document.querySelector('main h1');
   if (productHeader && productHeader.parentNode) {
     productHeader.parentNode.insertBefore(ratingContainer, productHeader.nextSibling);
