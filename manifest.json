@@ -6,7 +6,8 @@
     "activeTab",
     "storage",
     "webRequest",
-    "*://*.vivino.com/*"
+    "*://*.vivino.com/*",
+    "clipboardWrite"
   ],
   "background": {
     "scripts": [
@@ -41,5 +42,5 @@
       "128": "icons/icon.png"
     }
   },
-  "content_security_policy": "script-src 'self'; object-src 'self'; connect-src 'self' https://www.vivino.com"
+  "content_security_policy": "script-src 'self'; object-src 'self'; connect-src 'self' https://www.vivino.com; script-src-elem 'self'"
 }

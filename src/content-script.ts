@@ -1,10 +1,13 @@
 import browser from 'webextension-polyfill';
 import sentinel from 'sentinel-js';
 import { VivinoResponse } from './types';
+import { loadSettingAsync } from './storage';
 
 let fetchingRatingInProgress = false;
 
 (async () => {
+  if ((await loadSettingAsync('enabled')) == false) return;
+
   const winePageSelector = 'h1';
   sentinel.on(winePageSelector, tryInsertOnProdcutPage);
 })();
@@ -15,28 +18,29 @@ async function tryInsertOnProdcutPage(_: any) {
   }
 
   if (!isBottle()) {
-    insertVivinoHtmlElement(null, "Vinet är inte på flaska")
-    return
+    insertVivinoHtmlElement(null, 'Vinet är inte på flaska');
+    return;
   }
 
   fetchingRatingInProgress = true;
   const productName = getProductName();
   if (!productName) {
-    console.warn("Failed to extract product name.");
+    console.warn('Failed to extract product name.');
     return;
   }
 
   try {
     insertVivinoHtmlElement(null);
     const response = await fetchVivinoRating(productName);
-    response?.name ? insertVivinoHtmlElement(response) : insertVivinoHtmlElement(null, "❌ Ingen träff hos Vivino");
+    response?.name
+      ? insertVivinoHtmlElement(response)
+      : insertVivinoHtmlElement(null, '❌ Ingen träff hos Vivino');
   } catch (error) {
     console.error(`Error fetching rating for ${productName}:`, error);
-  }
-  finally {
+  } finally {
     fetchingRatingInProgress = false;
   }
-};
+}
 
 function getProductName(): string | null {
   const headerChildren = document.querySelector('main h1')?.children;
@@ -58,11 +62,17 @@ function getProductName(): string | null {
   return `${firstLine} ${secondLineWithoutComma}`.trim();
 }
 
-
-async function fetchVivinoRating(productName: string): Promise<VivinoResponse | null> {
+async function fetchVivinoRating(
+  productName: string
+): Promise<VivinoResponse | null> {
   try {
-    const response = await browser.runtime.sendMessage({ query: 'getRating', productName });
-    return typeof response === 'string' ? (JSON.parse(response) as VivinoResponse) : null;
+    const response = await browser.runtime.sendMessage({
+      query: 'getRating',
+      productName,
+    });
+    return typeof response === 'string'
+      ? (JSON.parse(response) as VivinoResponse)
+      : null;
   } catch (error) {
     console.error(`Failed to fetch rating for ${productName}:`, error);
     return null;
@@ -70,8 +80,11 @@ async function fetchVivinoRating(productName: string): Promise<VivinoResponse | 
 }
 
 // TODO: Clean and split this
-function insertVivinoHtmlElement(wine: VivinoResponse | null, message?: string) {
-  const existingContainer = document.getElementById("vivino-rating-container");
+function insertVivinoHtmlElement(
+  wine: VivinoResponse | null,
+  message?: string
+) {
+  const existingContainer = document.getElementById('vivino-rating-container');
   if (existingContainer) existingContainer.remove(); // Remove any previous result container
 
   // Create the container
@@ -87,7 +100,8 @@ function insertVivinoHtmlElement(wine: VivinoResponse | null, message?: string) 
     font-size: 14px;
   `;
 
-  const header = '<h3 style="color: #856404; text-align: center;">Systembolaget ratings</h3>';
+  const header =
+    '<h3 style="color: #856404; text-align: center;">Systembolaget ratings</h3>';
 
   if (message) {
     // If there's a message (like error or fallback), show it
@@ -97,8 +111,7 @@ function insertVivinoHtmlElement(wine: VivinoResponse | null, message?: string) 
         ${message}
       </div>
     `;
-  }
-  else if (!wine) {
+  } else if (!wine) {
     injectSpinnerCSS();
     ratingContainer.innerHTML = `
       ${header}
@@ -113,9 +126,13 @@ function insertVivinoHtmlElement(wine: VivinoResponse | null, message?: string) 
       ${header}
       <div style="display: flex; align-items: center; gap: 5px;">
         <strong>Vivino betyg:</strong>
-        ${generateStarsSvg(wine.rating)}  (${wine.rating} av ${wine.votes} röster)
+        ${generateStarsSvg(wine.rating)}  (${wine.rating} av ${
+      wine.votes
+    } röster)
       </div>
-      <a href="${wine.link}" target="_blank" rel="noopener noreferrer" style="color: #155724; text-decoration: underline;">
+      <a href="${
+        wine.link
+      }" target="_blank" rel="noopener noreferrer" style="color: #155724; text-decoration: underline;">
         Länk till Vivino
       </a>
     `;
@@ -124,7 +141,10 @@ function insertVivinoHtmlElement(wine: VivinoResponse | null, message?: string) 
   // Insert the container into the page
   const productHeader = document.querySelector('main h1');
   if (productHeader && productHeader.parentNode) {
-    productHeader.parentNode.insertBefore(ratingContainer, productHeader.nextSibling);
+    productHeader.parentNode.insertBefore(
+      ratingContainer,
+      productHeader.nextSibling
+    );
   }
 }
 
@@ -180,7 +200,8 @@ function generateStarsSvg(rating: number): string {
 }
 
 function isBottle(): boolean {
-  const container = document.querySelector("main h1")?.parentElement?.parentElement
+  const container =
+    document.querySelector('main h1')?.parentElement?.parentElement;
   if (container == null) {
     return false;
   }
@@ -189,5 +210,5 @@ function isBottle(): boolean {
     (p) => p !== null && p.textContent?.includes('flaska')
   );
 
-  return isBottle !== undefined
+  return isBottle !== undefined;
 }

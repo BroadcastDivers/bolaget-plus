@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Popup</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <div class="gradient-bg"></div>
+        <div class="content">
+            <div class="top-bar">
+                <button class="icon-button" id="shareButton" title="Share extension">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                        <polyline points="16 6 12 2 8 6"></polyline>
+                        <line x1="12" y1="2" x2="12" y2="15"></line>
+                    </svg>
+                </button>
+                <button class="icon-button" id="updateButton" title="Install update" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 2v6h-6"></path>
+                        <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                        <path d="M3 22v-6h6"></path>
+                        <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+                    </svg>
+                </button>
+            </div>
+            <h2>Settings</h2>
+            <div class="settings">
+                <div class="toggle-container">
+                    <span class="toggle-label">Enabled</span>
+                    <label class="switch">
+                        <input type="checkbox" id="enabled">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="toggle-container">
+                    <span class="toggle-label">Vin</span>
+                    <label class="switch">
+                        <input type="checkbox" id="vin">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <!-- <div class="toggle-container">
+                    <span class="toggle-label">Öl</span>
+                    <label class="switch">
+                        <input type="checkbox" id="ol" disabled=true>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="toggle-container">
+                    <span class="toggle-label">Sprit</span>
+                    <label class="switch">
+                        <input type="checkbox" id="sprit" disabled="true">
+                        <span class="slider"></span>
+                    </label>
+                </div> -->
+            </div>
+            <div class="footer">
+                <span class="version">v1.0.0</span>
+                <a href="/donate" target="_blank" rel="noopener noreferrer" class="donate-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
+                    </svg>
+                    Donate
+                </a>
+                <a href="www.github.com/" target="_blank" rel="noopener noreferrer" class="donate-link">
+                    Report an issue
+                </a>
+            </div>
+        </div>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>

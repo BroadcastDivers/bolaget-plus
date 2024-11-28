@@ -4,8 +4,7 @@ module.exports = {
   entry: {
     background: './src/background.ts',
     'content-script': './src/content-script.ts', // Keep entry as 'content-script'
-    popup: './src/popup.ts',
-
+    popup: './src/popup/popup.ts',
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
