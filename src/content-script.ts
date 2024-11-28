@@ -1,5 +1,3 @@
-// content-script.js
-
 import browser from 'webextension-polyfill';
 import sentinel from 'sentinel-js';
 import { VivinoResponse } from './types';
@@ -12,8 +10,13 @@ let fetchingRatingInProgress = false;
 })();
 
 async function tryInsertOnProdcutPage(_: any) {
-  if (fetchingRatingInProgress || !location.href.includes('/produkt/vin/') || !isBottle()) {
+  if (fetchingRatingInProgress || !location.href.includes('/produkt/vin/') ) {
     return;
+  }
+
+  if (!isBottle()) {
+    insertVivinoHtmlElement(null, "Vinet är inte på flaska")
+    return
   }
 
   fetchingRatingInProgress = true;
@@ -26,7 +29,7 @@ async function tryInsertOnProdcutPage(_: any) {
   try {
     const rating = await fetchVivinoRating(productName);
     if (rating) {
-      insertRatingIntoPage(rating);
+      insertVivinoHtmlElement(rating);
     }
   } catch (error) {
     console.error(`Error fetching rating for ${productName}:`, error);
@@ -67,7 +70,9 @@ async function fetchVivinoRating(productName: string): Promise<VivinoResponse | 
   }
 }
 
-function insertRatingIntoPage(wine: VivinoResponse) {
+function insertVivinoHtmlElement(wine: VivinoResponse | null, message?: string) {
+  document.getElementById("vivino-rating-container")?.remove()
+
   const ratingContainer = document.createElement('div');
   ratingContainer.id = 'vivino-rating-container';
   ratingContainer.style.cssText = `
@@ -80,15 +85,26 @@ function insertRatingIntoPage(wine: VivinoResponse) {
     font-size: 14px;
   `;
 
-  ratingContainer.innerHTML = `
-    <div style="display: flex; align-items: center; gap: 5px;">
-      <strong>Vivino betyg:</strong>
-      ${generateStarsSvg(wine.rating)}  (${wine.rating} av ${wine.votes} röster)
-    </div>
-    <a href="${wine.link}" target="_blank" rel="noopener noreferrer" style="color: #155724; text-decoration: underline;">
-      Länk till Vivino
-    </a>
-  `;
+  const header = '<h3 style="color: #856404; text-align: center;">Systembolaget ratings</h3>';
+  if (wine) {
+    ratingContainer.innerHTML = `
+      ${header}
+      <div style="display: flex; align-items: center; gap: 5px;">
+        <strong>Vivino betyg:</strong>
+        ${generateStarsSvg(wine.rating)}  (${wine.rating} av ${wine.votes} röster)
+      </div>
+      <a href="${wine.link}" target="_blank" rel="noopener noreferrer" style="color: #155724; text-decoration: underline;">
+        Länk till Vivino
+      </a>
+    `;
+  } else if (message) {
+    ratingContainer.innerHTML = `
+      ${header}
+      <div style="color: #856404; text-align: center;">
+        ${message}
+      </div>
+    `;
+  }
 
   const productHeader = document.querySelector('main h1');
   if (productHeader && productHeader.parentNode) {
