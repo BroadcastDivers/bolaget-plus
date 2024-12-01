@@ -25,16 +25,18 @@ async function tryInsertOnProdcutPage(_: any) {
   fetchingRatingInProgress = true;
   const productName = getProductName();
   if (!productName) {
-    console.warn('Failed to extract product name.');
     return;
   }
 
   try {
     insertVivinoHtmlElement(null);
     const response = await fetchVivinoRating(productName);
-    response?.name
-      ? insertVivinoHtmlElement(response)
-      : insertVivinoHtmlElement(null, '❌ Ingen träff hos Vivino');
+    if (response?.found) {
+      insertVivinoHtmlElement(response)
+    } else {
+
+      insertVivinoHtmlElement(null, '❌ Ingen träff hos Vivino');
+    }
   } catch (error) {
     console.error(`Error fetching rating for ${productName}:`, error);
   } finally {
@@ -126,12 +128,10 @@ function insertVivinoHtmlElement(
       ${header}
       <div style="display: flex; align-items: center; gap: 5px;">
         <strong>Vivino betyg:</strong>
-        ${generateStarsSvg(wine.rating)}  (${wine.rating} av ${
-      wine.votes
-    } röster)
+        ${generateStarsSvg(wine.rating)}  (${wine.rating} av ${wine.votes
+      } röster)
       </div>
-      <a href="${
-        wine.link
+      <a href="${wine.link
       }" target="_blank" rel="noopener noreferrer" style="color: #155724; text-decoration: underline;">
         Länk till Vivino
       </a>
