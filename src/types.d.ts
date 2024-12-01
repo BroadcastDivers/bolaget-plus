@@ -6,6 +6,7 @@ interface VivinoMessage {
 }
 
 interface VivinoResponse {
+  found: boolean;
   name: string?;
   rating: float?;
   votes: int?;

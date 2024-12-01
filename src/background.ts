@@ -1,8 +1,10 @@
 import * as cheerio from 'cheerio';
 import browser from 'webextension-polyfill';
 import { VivinoMessage, VivinoResponse } from './types';
+import stringSimilarity from "string-similarity";
 
-console.log('background script initialized');
+const NAME_MATCH_THRESHOLD = 0.5;
+
 async function fetchRatingFromVivino(query: string): Promise<string | null> {
   const url = `https://www.vivino.com/search/wines?q=${encodeURIComponent(
     query
@@ -25,8 +27,13 @@ async function fetchRatingFromVivino(query: string): Promise<string | null> {
 
     // Extracting wine card elements
     const wineCard = $('.default-wine-card').first();
-
     const name = wineCard.find('.wine-card__name').first().text().trim();
+
+    const similarityRate = stringSimilarity.compareTwoStrings(query, name);
+    if (similarityRate < NAME_MATCH_THRESHOLD) {
+      return JSON.stringify({ found: false, name: null, link: null, rating: null, votes: null } as VivinoResponse);
+    }
+
     // Extracting average rating
     const ratingRaw = wineCard
       .find('.average__container .average__number')
@@ -51,7 +58,7 @@ async function fetchRatingFromVivino(query: string): Promise<string | null> {
       .find('a[data-cartitemsource="text-search"]')
       .first();
     const link = `https://www.vivino.com/${linkElement.attr('href')}`;
-    const vivinoResponse = { name, link, rating, votes } as VivinoResponse;
+    const vivinoResponse = { found: true, name, link, rating, votes } as VivinoResponse;
     return JSON.stringify(vivinoResponse);
   } catch (error) {
     console.error('Error:', error);
