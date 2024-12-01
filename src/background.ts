@@ -26,10 +26,7 @@ async function fetchRatingFromVivino(query: string): Promise<string | null> {
     // Extracting wine card elements
     const wineCard = $('.default-wine-card').first();
 
-    const name = wineCard.find('.wine-card__name')
-    .first()
-    .text()
-    .trim();
+    const name = wineCard.find('.wine-card__name').first().text().trim();
     // Extracting average rating
     const ratingRaw = wineCard
       .find('.average__container .average__number')
@@ -38,21 +35,23 @@ async function fetchRatingFromVivino(query: string): Promise<string | null> {
       .trim()
       .replace(',', '.');
 
-    const rating = ratingRaw !== "-" ? Number.parseFloat(ratingRaw) : null;
+    const rating = ratingRaw !== '-' ? Number.parseFloat(ratingRaw) : null;
     // Extracting number of ratings
     const votesRaw = wineCard
       .find('.average__stars .text-micro')
       .first()
       .text()
       .trim();
+    const votes =
+      votesRaw.includes(' ratings') || votesRaw.includes(' betyg')
+        ? Number.parseInt(votesRaw.split(' ')[0])
+        : null;
 
-    const votes = votesRaw.includes(" ratings") ? Number.parseInt(votesRaw.split(" ")[0]) : null;
-      
-    const linkElement = wineCard.find('a[data-cartitemsource="text-search"]').first();
+    const linkElement = wineCard
+      .find('a[data-cartitemsource="text-search"]')
+      .first();
     const link = `https://www.vivino.com/${linkElement.attr('href')}`;
-
-    const vivinoResponse = {name, link, rating, votes } as VivinoResponse;
-    console.log(vivinoResponse);
+    const vivinoResponse = { name, link, rating, votes } as VivinoResponse;
     return JSON.stringify(vivinoResponse);
   } catch (error) {
     console.error('Error:', error);
@@ -62,14 +61,13 @@ async function fetchRatingFromVivino(query: string): Promise<string | null> {
 
 browser.runtime.onMessage.addListener(async (message) => {
   if (
-    typeof message === "object" &&
+    typeof message === 'object' &&
     message !== null &&
-    "query" in message &&
-    "productName" in message
+    'query' in message &&
+    'productName' in message
   ) {
     const { productName } = message as VivinoMessage;
 
     return await fetchRatingFromVivino(productName);
   }
 });
-
