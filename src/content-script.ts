@@ -202,15 +202,24 @@ function generateStarsSvg(rating: number): string {
 }
 
 function isBottle(): boolean {
-  const container =
+  const productContainer =
     document.querySelector('main h1')?.parentElement?.parentElement
-  if (container == null) {
+  if (productContainer == null) {
     return false
   }
 
-  const isBottle = Array.from(container.querySelectorAll('p')).find(
-    (p) => p !== null && p.textContent?.includes('flaska')
-  )
+  const BOTTLE_STRING = 'flaska'
+  let isBottle =
+    Array.from(productContainer.querySelectorAll('p')).find((p) =>
+      p.textContent?.toLowerCase().includes(BOTTLE_STRING)
+    ) !== undefined
 
-  return isBottle !== undefined
+  if (isBottle === false) {
+    isBottle =
+      Array.from(productContainer.querySelectorAll('option'))
+        .map((i) => i.innerText.toLowerCase())
+        .find((i) => i.includes(BOTTLE_STRING)) !== undefined
+  }
+
+  return isBottle
 }
