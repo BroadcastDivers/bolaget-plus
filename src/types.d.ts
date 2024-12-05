@@ -5,7 +5,7 @@ export interface VivinoMessage {
 export interface VivinoResponse {
   found: boolean
   name: string | null
-  rating: number | null
-  votes: number | null
+  rating: number
+  votes: number
   link: string | null
 }
