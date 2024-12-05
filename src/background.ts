@@ -32,11 +32,7 @@ async function fetchRatingFromVivino(query: string): Promise<string | null> {
     const similarityRate = stringSimilarity.compareTwoStrings(query, name)
     if (similarityRate < NAME_MATCH_THRESHOLD) {
       return JSON.stringify({
-        found: false,
-        name: null,
-        link: null,
-        rating: null,
-        votes: null
+        found: false
       } as VivinoResponse)
     }
 
