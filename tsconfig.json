@@ -1,21 +1,3 @@
 {
-  "compilerOptions": {
-    "target": "ES6",
-    "lib": [
-      "DOM",
-      "ES6"
-    ],
-    "module": "ESNext",
-    "moduleResolution": "node",
-    "strict": true,
-    "esModuleInterop": true,
-    "outDir": "dist",
-    "skipLibCheck": true
-  },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "extends": "./.wxt/tsconfig.json"
 }
