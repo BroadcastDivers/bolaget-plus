@@ -1,4 +1,4 @@
-import browser from 'webextension-polyfill'
+import browser from 'webextension-polyfill';
 
 /* 
 todo: Maybe create a type for the settings
@@ -16,7 +16,7 @@ and the content script reads them.
  * @returns A promise that resolves when the value has been saved.
  */
 async function saveSettingAsync(key: string, value: boolean): Promise<void> {
-  await browser.storage.local.set({ [key]: value })
+  await browser.storage.local.set({ [key]: value });
 }
 
 /**
@@ -27,8 +27,8 @@ async function saveSettingAsync(key: string, value: boolean): Promise<void> {
  * If the setting is not found, it defaults to `true`.
  */
 async function loadSettingAsync(key: string): Promise<boolean> {
-  const result = await browser.storage.local.get(key)
-  return (result[key] as boolean) ?? true
+  const result = await browser.storage.local.get(key);
+  return (result[key] as boolean) ?? true;
 }
 
 // async function initSettingsAsync(): Promise<void> {
@@ -42,4 +42,4 @@ async function loadSettingAsync(key: string): Promise<boolean> {
 //   await browser.storage.local.set(settings)
 // }
 
-export { saveSettingAsync, loadSettingAsync }
+export { saveSettingAsync, loadSettingAsync };
