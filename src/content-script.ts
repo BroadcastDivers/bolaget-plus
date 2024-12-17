@@ -4,6 +4,7 @@ import * as domUtils from './domUtils'
 import * as productUtils from './productUtils'
 import { fetchVivinoRating } from './api'
 import { translations } from './translations'
+import { VivinoResultStatus } from './types'
 
 let fetchingRatingInProgress: boolean = false
 
@@ -35,9 +36,13 @@ async function tryInsertOnProdcutPage(_: any) {
   try {
     domUtils.showLoadingSpinner()
     const response = await fetchVivinoRating(productName)
-    if (response?.found) {
+    if (response?.status === VivinoResultStatus.Found) {
       domUtils.setWineRating(response.rating, response.votes, response.link)
-    } else {
+    } 
+    else if (response?.status === VivinoResultStatus.Uncertain) {
+      domUtils.setUncertain(response.link)
+    }
+      else {
       domUtils.setMessage(translations.noMatch)
     }
   } catch (error) {
