@@ -76,6 +76,28 @@ export function setWineRating(
   ratingContainer.appendChild(linkElement)
 }
 
+export function setUncertain(
+  link: string | null	
+) {
+  const ratingContainer = getAndClearContainer()
+
+  const ratingElement = document.createElement('div')
+  ratingElement.style.cssText = `display: flex; align-items: center; gap: 5px;`
+  ratingContainer.innerHTML = `<div style="color: #856404; text-align: center;">${translations.uncertainMatch}</div>`
+
+  const linkElement = document.createElement('a')
+  if (link) {
+    linkElement.href = link
+  }
+  linkElement.target = '_blank'
+  linkElement.rel = 'noopener noreferrer'
+  linkElement.style.cssText = `color: #155724; text-decoration: underline;`
+  linkElement.innerText = translations.searchAtVivino
+
+  ratingContainer.appendChild(ratingElement)
+  ratingContainer.appendChild(linkElement)
+}
+
 export function getAndClearContainer(): HTMLElement {
   let container = document.getElementById(RATING_CONTAINER_BODY_ID)
   if (!container) {

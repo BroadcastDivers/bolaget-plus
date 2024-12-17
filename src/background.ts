@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio'
 import browser from 'webextension-polyfill'
-import { VivinoMessage, VivinoResponse } from './types'
+import { VivinoMessage, VivinoResponse, VivinoResultStatus } from './types'
 import stringSimilarity from 'string-similarity'
 
 const NAME_MATCH_THRESHOLD = 0.5
@@ -32,7 +32,8 @@ async function fetchRatingFromVivino(query: string): Promise<string | null> {
     const similarityRate = stringSimilarity.compareTwoStrings(query, name)
     if (similarityRate < NAME_MATCH_THRESHOLD) {
       return JSON.stringify({
-        found: false
+        status: VivinoResultStatus.Uncertain,
+        link: url
       } as VivinoResponse)
     }
 
@@ -56,12 +57,14 @@ async function fetchRatingFromVivino(query: string): Promise<string | null> {
         ? Number.parseInt(votesRaw.split(' ')[0])
         : null
 
+    // TODO: Handle case when there are no/too few ratings
+
     const linkElement = wineCard
       .find('a[data-cartitemsource="text-search"]')
       .first()
     const link = `https://www.vivino.com/${linkElement.attr('href')}`
     const vivinoResponse = {
-      found: true,
+      status: VivinoResultStatus.Found,
       name,
       link,
       rating,
