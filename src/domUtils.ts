@@ -76,9 +76,7 @@ export function setWineRating(
   ratingContainer.appendChild(linkElement)
 }
 
-export function setUncertain(
-  link: string | null	
-) {
+export function setUncertain(link: string | null) {
   const ratingContainer = getAndClearContainer()
 
   const ratingElement = document.createElement('div')
@@ -155,4 +153,27 @@ function generateStarsSvg(rating: number): string {
   }
 
   return `<div style="display: flex">${starsHtml}</div>`
+}
+
+// TODO
+export function injectRatingContainers() {
+  const mainElement = document.querySelector('main')
+  if (!mainElement) {
+    return
+  }
+  const parentElements =
+    mainElement.children[1].children[1].children[1].children[1].children[2]
+      .children
+
+  for (let i = 0; i < parentElements.length; i++) {
+    const parentDiv = document.createElement('div')
+    parentDiv.style.cssText = `background-color: #fff3cd; padding: 10px; margin-top: 10px; border: 1px solid #ffeeba; border-radius: 4px; font-family: Arial, sans-serif; font-size: 14px;`
+
+    const newElement = document.createElement('div')
+    newElement.style.cssText = `display: flex; align-items: center; gap: 5px;`
+    newElement.innerHTML = `<div style="color: #856404; text-align: center;">1 of 5</div>`
+
+    parentDiv.appendChild(newElement)
+    parentElements[i].appendChild(parentDiv)
+  }
 }

@@ -17,7 +17,17 @@ let fetchingRatingInProgress: boolean = false
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
 async function tryInsertOnProdcutPage(_: any) {
-  if (fetchingRatingInProgress || !location.href.includes('/produkt/vin/')) {
+  if (fetchingRatingInProgress ) {
+    return
+  }
+
+  // TODO
+  if (location.href.includes('/sortiment/vin/')) {
+    domUtils.injectRatingContainers()
+    return
+  }
+
+  if (!location.href.includes('/produkt/vin/')) {
     return
   }
 
@@ -38,11 +48,9 @@ async function tryInsertOnProdcutPage(_: any) {
     const response = await fetchVivinoRating(productName)
     if (response?.status === VivinoResultStatus.Found) {
       domUtils.setWineRating(response.rating, response.votes, response.link)
-    } 
-    else if (response?.status === VivinoResultStatus.Uncertain) {
+    } else if (response?.status === VivinoResultStatus.Uncertain) {
       domUtils.setUncertain(response.link)
-    }
-      else {
+    } else {
       domUtils.setMessage(translations.noMatch)
     }
   } catch (error) {
