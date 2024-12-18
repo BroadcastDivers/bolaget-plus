@@ -38,11 +38,9 @@ async function tryInsertOnProdcutPage(_: any) {
     const response = await fetchVivinoRating(productName)
     if (response?.status === VivinoResultStatus.Found) {
       domUtils.setWineRating(response.rating, response.votes, response.link)
-    } 
-    else if (response?.status === VivinoResultStatus.Uncertain) {
+    } else if (response?.status === VivinoResultStatus.Uncertain) {
       domUtils.setUncertain(response.link)
-    }
-      else {
+    } else {
       domUtils.setMessage(translations.noMatch)
     }
   } catch (error) {

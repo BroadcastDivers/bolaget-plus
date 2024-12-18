@@ -76,9 +76,7 @@ export function setWineRating(
   ratingContainer.appendChild(linkElement)
 }
 
-export function setUncertain(
-  link: string | null	
-) {
+export function setUncertain(link: string | null) {
   const ratingContainer = getAndClearContainer()
 
   const ratingElement = document.createElement('div')
