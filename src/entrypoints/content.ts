@@ -10,29 +10,21 @@ import { RatingResultStatus, type RatingResponse } from '@/@types/messages';
 export default defineContentScript({
   matches: ['*://*.systembolaget.se/*'],
   main() {
-    // maybe the wrapped async on line 20 should happen here?
-    console.log('Hello content.');
+    sentinel.on('h1', tryInsertOnProdcutPage);
   },
 });
 
 let fetchingRatingInProgress = false;
 
-(async () => {
-  if ((await loadSettingAsync('enabled')) === false) return;
-
-  const winePageSelector = 'h1';
-  if (
-    window.location?.href.includes('/produkt/vin/') ||
-    window.location?.href.includes('/produkt/sprit/') ||
-    window.location?.href.includes('/produkt/ol/')
-  ) {
-    sentinel.on(winePageSelector, tryInsertOnProdcutPage);
-  }
-})();
-
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 async function tryInsertOnProdcutPage(_: any) {
+
+  const url = window.location?.href;
+  if (!url || !['/produkt/vin/', '/produkt/sprit/', '/produkt/ol/'].some(path => url.includes(path))) {
+    return;
+  }
+
   if (fetchingRatingInProgress) {
     return;
   }
