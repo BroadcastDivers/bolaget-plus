@@ -1,63 +1,67 @@
-import sentinel from 'sentinel-js';
-import { loadSettingAsync } from '@/components/storage';
-import * as domUtils from '@/components/domUtils';
-import { fetchUntappdRating, fetchVivinoRating } from '@/components/api';
-import { translations } from '../translations';
-import * as productUtils from '@/components/productUtils';
-import { RatingResultStatus, type RatingResponse } from '@/@types/messages';
+import sentinel from 'sentinel-js'
+import { loadSettingAsync } from '@/components/storage'
+import * as domUtils from '@/components/domUtils'
+import { fetchUntappdRating, fetchVivinoRating } from '@/components/api'
+import { translations } from '../translations'
+import * as productUtils from '@/components/productUtils'
+import { RatingResultStatus, type RatingResponse } from '@/@types/messages'
 
 // TODO: this is required for WXT, look into it or make it fetch settings from storage?
 export default defineContentScript({
   matches: ['*://*.systembolaget.se/*'],
   main() {
-    sentinel.on('h1', tryInsertOnProdcutPage);
-  },
-});
+    sentinel.on('h1', tryInsertOnProdcutPage)
+  }
+})
 
-let fetchingRatingInProgress = false;
+let fetchingRatingInProgress = false
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 async function tryInsertOnProdcutPage(_: any) {
-
-  const url = window.location?.href;
-  if (!url || !['/produkt/vin/', '/produkt/sprit/', '/produkt/ol/'].some(path => url.includes(path))) {
-    return;
+  const url = window.location?.href
+  if (
+    !url ||
+    !['/produkt/vin/', '/produkt/sprit/', '/produkt/ol/'].some((path) =>
+      url.includes(path)
+    )
+  ) {
+    return
   }
 
   if (fetchingRatingInProgress) {
-    return;
+    return
   }
 
-  domUtils.injectRatingContainer();
+  domUtils.injectRatingContainer()
   if (
     window.location?.href.includes('/produkt/vin/') &&
     !productUtils.isBottle()
   ) {
-    domUtils.setMessage(translations.notOnBottle);
-    return;
+    domUtils.setMessage(translations.notOnBottle)
+    return
   }
 
-  fetchingRatingInProgress = true;
-  const productName = productUtils.getProductName();
+  fetchingRatingInProgress = true
+  const productName = productUtils.getProductName()
   if (!productName) {
-    return;
+    return
   }
 
   try {
-    domUtils.showLoadingSpinner();
+    domUtils.showLoadingSpinner()
 
     if (window.location.href.includes('/produkt/vin/')) {
-      await handleRating(fetchVivinoRating, productName, 'wine');
+      await handleRating(fetchVivinoRating, productName, 'wine')
     }
 
     if (window.location.href.includes('/produkt/ol/')) {
-      await handleRating(fetchUntappdRating, productName, 'beer');
+      await handleRating(fetchUntappdRating, productName, 'beer')
     }
   } catch (error) {
-    console.error(`Error fetching rating for ${productName}:`, error);
+    console.error(`Error fetching rating for ${productName}:`, error)
   } finally {
-    fetchingRatingInProgress = false;
+    fetchingRatingInProgress = false
   }
 }
 
@@ -66,26 +70,26 @@ async function handleRating(
   productName: string,
   type: 'wine' | 'beer'
 ) {
-  const response = await fetchRatingFunction(productName);
-  console.log('Response:', response);
+  const response = await fetchRatingFunction(productName)
+  console.log('Response:', response)
 
-  if (!response) return;
+  if (!response) return
 
   switch (response?.status) {
     case RatingResultStatus.NotFound:
-      domUtils.setMessage(translations.noMatch);
-      return;
+      domUtils.setMessage(translations.noMatch)
+      return
     case RatingResultStatus.Uncertain:
-      domUtils.setUncertain(response.link);
-      return;
+      domUtils.setUncertain(response.link)
+      return
     // case RatingResultStatus.Found:
     //   break;
   }
 
   if (type === 'wine') {
-    domUtils.setWineRating(response.rating, response.votes, response.link);
+    domUtils.setWineRating(response.rating, response.votes, response.link)
   } else if (type === 'beer') {
     // domUtils.setRating('beer', response.rating, response.votes, response.link);
-    domUtils.setWineRating(response.rating, response.votes, response.link);
+    domUtils.setWineRating(response.rating, response.votes, response.link)
   }
 }

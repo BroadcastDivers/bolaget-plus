@@ -1,53 +1,53 @@
-import { translations } from '../translations';
+import { translations } from '../translations'
 
-const RATING_CONTAINER_ID = 'rating-container';
-const RATING_CONTAINER_BODY_ID = 'rating-container-body';
+const RATING_CONTAINER_ID = 'rating-container'
+const RATING_CONTAINER_BODY_ID = 'rating-container-body'
 
 export function injectRatingContainer() {
   if (document.getElementById(RATING_CONTAINER_BODY_ID)) {
-    return;
+    return
   }
-  const ratingContainer = document.createElement('div');
-  ratingContainer.id = RATING_CONTAINER_ID;
+  const ratingContainer = document.createElement('div')
+  ratingContainer.id = RATING_CONTAINER_ID
   ratingContainer.style.cssText =
-    'background-color: #fff3cd; padding: 10px; margin-top: 10px; border: 1px solid #ffeeba; border-radius: 4px; font-family: Arial, sans-serif; font-size: 14px;';
+    'background-color: #fff3cd; padding: 10px; margin-top: 10px; border: 1px solid #ffeeba; border-radius: 4px; font-family: Arial, sans-serif; font-size: 14px;'
 
   const header =
-    '<h3 style="color: #856404; text-align: center;">Systembolaget ratings</h3>';
+    '<h3 style="color: #856404; text-align: center;">Systembolaget ratings</h3>'
 
-  ratingContainer.innerHTML = `${header}`;
+  ratingContainer.innerHTML = `${header}`
 
-  const bodyDiv = document.createElement('div');
-  bodyDiv.id = RATING_CONTAINER_BODY_ID;
-  ratingContainer.appendChild(bodyDiv);
+  const bodyDiv = document.createElement('div')
+  bodyDiv.id = RATING_CONTAINER_BODY_ID
+  ratingContainer.appendChild(bodyDiv)
 
-  const productHeader = document.querySelector('main h1');
+  const productHeader = document.querySelector('main h1')
   if (productHeader?.parentNode) {
     productHeader.parentNode.insertBefore(
       ratingContainer,
       productHeader.nextSibling
-    );
+    )
   }
 
   if (!document.getElementById('spinner-css')) {
-    const style = document.createElement('style');
-    style.id = 'spinner-css';
+    const style = document.createElement('style')
+    style.id = 'spinner-css'
     style.innerHTML = `
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
-      `;
-    document.head.appendChild(style);
+      `
+    document.head.appendChild(style)
   }
 }
 
 export function setMessage(message: string) {
-  const ratingContainer = document.getElementById(RATING_CONTAINER_BODY_ID);
+  const ratingContainer = document.getElementById(RATING_CONTAINER_BODY_ID)
   if (!ratingContainer) {
-    return;
+    return
   }
-  ratingContainer.innerHTML = `<div style="color: #856404; text-align: center;">${message}</div>`;
+  ratingContainer.innerHTML = `<div style="color: #856404; text-align: center;">${message}</div>`
 }
 
 export function setWineRating(
@@ -55,90 +55,90 @@ export function setWineRating(
   votes: number,
   link: string | null
 ) {
-  const ratingContainer = getAndClearContainer();
+  const ratingContainer = getAndClearContainer()
 
-  const ratingElement = document.createElement('div');
-  ratingElement.style.cssText = 'display: flex; align-items: center; gap: 5px;';
+  const ratingElement = document.createElement('div')
+  ratingElement.style.cssText = 'display: flex; align-items: center; gap: 5px;'
   ratingElement.innerHTML = `
       <strong>${translations.rating}:</strong>
       ${generateStarsSvg(rating)}  (${rating} ${translations.of} ${votes} ${
-    translations.votes
-  })
-    `;
+        translations.votes
+      })
+    `
 
-  const linkElement = document.createElement('a');
+  const linkElement = document.createElement('a')
   if (link) {
-    linkElement.href = link;
+    linkElement.href = link
   }
-  linkElement.target = '_blank';
-  linkElement.rel = 'noopener noreferrer';
-  linkElement.style.cssText = 'color: #155724; text-decoration: underline;';
-  linkElement.innerText = translations.linkToVivino;
+  linkElement.target = '_blank'
+  linkElement.rel = 'noopener noreferrer'
+  linkElement.style.cssText = 'color: #155724; text-decoration: underline;'
+  linkElement.innerText = translations.linkToVivino
 
-  ratingContainer.appendChild(ratingElement);
-  ratingContainer.appendChild(linkElement);
+  ratingContainer.appendChild(ratingElement)
+  ratingContainer.appendChild(linkElement)
 }
 
 export function setUncertain(link: string | null) {
-  const ratingContainer = getAndClearContainer();
+  const ratingContainer = getAndClearContainer()
 
-  const ratingElement = document.createElement('div');
-  ratingElement.style.cssText = 'display: flex; align-items: center; gap: 5px;';
-  ratingContainer.innerHTML = `<div style="color: #856404; text-align: center;">${translations.uncertainMatch}</div>`;
+  const ratingElement = document.createElement('div')
+  ratingElement.style.cssText = 'display: flex; align-items: center; gap: 5px;'
+  ratingContainer.innerHTML = `<div style="color: #856404; text-align: center;">${translations.uncertainMatch}</div>`
 
-  const linkElement = document.createElement('a');
+  const linkElement = document.createElement('a')
   if (link) {
-    linkElement.href = link;
+    linkElement.href = link
   }
-  linkElement.target = '_blank';
-  linkElement.rel = 'noopener noreferrer';
-  linkElement.style.cssText = 'color: #155724; text-decoration: underline;';
-  linkElement.innerText = translations.searchAtVivino;
+  linkElement.target = '_blank'
+  linkElement.rel = 'noopener noreferrer'
+  linkElement.style.cssText = 'color: #155724; text-decoration: underline;'
+  linkElement.innerText = translations.searchAtVivino
 
-  ratingContainer.appendChild(ratingElement);
-  ratingContainer.appendChild(linkElement);
+  ratingContainer.appendChild(ratingElement)
+  ratingContainer.appendChild(linkElement)
 }
 
 export function getAndClearContainer(): HTMLElement {
-  let container = document.getElementById(RATING_CONTAINER_BODY_ID);
+  let container = document.getElementById(RATING_CONTAINER_BODY_ID)
   if (!container) {
-    injectRatingContainer();
+    injectRatingContainer()
   }
-  container = document.getElementById(RATING_CONTAINER_BODY_ID) as HTMLElement;
-  container.innerHTML = '';
-  return container;
+  container = document.getElementById(RATING_CONTAINER_BODY_ID) as HTMLElement
+  container.innerHTML = ''
+  return container
 }
 
 export function showLoadingSpinner() {
-  const ratingContainer = getAndClearContainer();
-  const spinner = document.createElement('div');
+  const ratingContainer = getAndClearContainer()
+  const spinner = document.createElement('div')
   spinner.style.cssText =
-    'display: flex; justify-content: center; align-items: center; height: 50px; gap: 10px;';
+    'display: flex; justify-content: center; align-items: center; height: 50px; gap: 10px;'
   spinner.innerHTML = `
       <div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #095741; border-radius: 50%; width: 30px; height: 30px; animation: spin 2s linear infinite;"></div>
       <span style="font-size: 14px; color: #856404;">${translations.loading}..</span>
-    `;
+    `
 
-  ratingContainer.appendChild(spinner);
+  ratingContainer.appendChild(spinner)
 }
 
 function generateStarsSvg(rating: number): string {
-  console.log(`got rating: ${rating}`);
-  const maxStars = 5;
-  const redColor = '#dc3545'; // Red color for the stars
-  const grayColor = '#e4e5e9'; // Gray color for empty stars
+  console.log(`got rating: ${rating}`)
+  const maxStars = 5
+  const redColor = '#dc3545' // Red color for the stars
+  const grayColor = '#e4e5e9' // Gray color for empty stars
 
   // Function to create an SVG star with a given fill color
   const starSvg = (fill: string) => `
       <svg width="20" height="20" viewBox="0 0 24 24" fill="${fill}" xmlns="http://www.w3.org/2000/svg">
         <path d="M12 .587l3.668 7.568L24 9.423l-6 5.832 1.416 8.25L12 18.897 4.584 23.505 6 15.255l-6-5.832 8.332-1.268L12 .587z"/>
-      </svg>`;
+      </svg>`
 
-  let starsHtml = '';
+  let starsHtml = ''
   for (let i = 0; i < maxStars; i++) {
     if (rating >= i + 1) {
       // Full red star
-      starsHtml += starSvg(redColor);
+      starsHtml += starSvg(redColor)
     } else if (rating >= i + 0.5) {
       // Half red star using linear gradient
       starsHtml += `
@@ -150,12 +150,12 @@ function generateStarsSvg(rating: number): string {
               </linearGradient>
             </defs>
             <path d="M12 .587l3.668 7.568L24 9.423l-6 5.832 1.416 8.25L12 18.897 4.584 23.505 6 15.255l-6-5.832 8.332-1.268L12 .587z" fill="url(#halfStarGradient)"/>
-          </svg>`;
+          </svg>`
     } else {
       // Empty gray star
-      starsHtml += starSvg(grayColor);
+      starsHtml += starSvg(grayColor)
     }
   }
 
-  return `<div style="display: flex">${starsHtml}</div>`;
+  return `<div style="display: flex">${starsHtml}</div>`
 }
