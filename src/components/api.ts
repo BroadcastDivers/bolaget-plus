@@ -1,9 +1,9 @@
-import browser from 'webextension-polyfill';
+import browser from 'webextension-polyfill'
 import {
   MessageType,
   type FetchMessage,
-  type RatingResponse,
-} from '@/@types/messages';
+  type RatingResponse
+} from '@/@types/messages'
 
 export async function fetchVivinoRating(
   productName: string
@@ -11,14 +11,14 @@ export async function fetchVivinoRating(
   try {
     const response = await browser.runtime.sendMessage({
       query: 'vivino',
-      productName,
-    });
+      productName
+    })
     return typeof response === 'string'
       ? (JSON.parse(response) as RatingResponse)
-      : null;
+      : null
   } catch (error) {
-    console.error(`Failed to fetch rating for ${productName}:`, error);
-    return null;
+    console.error(`Failed to fetch rating for ${productName}:`, error)
+    return null
   }
 }
 
@@ -26,19 +26,19 @@ export async function fetchUntappdRating(
   productName: string
 ): Promise<RatingResponse | null> {
   try {
-    console.log('Inside fetchUntappdRating');
+    console.log('Inside fetchUntappdRating')
 
     const message: FetchMessage = {
       query: MessageType.Untappd,
-      productName,
-    };
-    const response = await browser.runtime.sendMessage(message);
+      productName
+    }
+    const response = await browser.runtime.sendMessage(message)
 
     return typeof response === 'string'
       ? (JSON.parse(response) as RatingResponse) //todo: skip json parse? Sent the ratingresponse
-      : null;
+      : null
   } catch (error) {
-    console.error(`Failed to fetch rating for ${productName}:`, error);
-    return null;
+    console.error(`Failed to fetch rating for ${productName}:`, error)
+    return null
   }
 }

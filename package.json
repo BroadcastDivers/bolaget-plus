@@ -14,7 +14,7 @@
 		"zip:firefox": "wxt zip -b firefox",
 		"compile": "tsc --noEmit",
 		"postinstall": "wxt prepare",
-		"format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\""
+		"ft": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\""
 	},
 	"devDependencies": {
 		"@types/chrome": "^0.0.280",
