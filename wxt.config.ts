@@ -14,7 +14,6 @@ export default defineConfig({
       port: 3000,
     },
   },
-  // extensionApi: 'chrome',
   extensionApi: 'webextension-polyfill',
   srcDir: 'src',
   manifest: {
@@ -36,7 +35,12 @@ export default defineConfig({
     ],
     content_security_policy: {
       extension_pages:
-        "script-src 'self'; object-src 'self'; connect-src ws://localhost:3000/ 'self' https://www.vivino.com https://untappd.com; script-src-elem 'self'",
+        "script-src 'self'; object-src 'self'; connect-src ws://localhost:3000/ 'self' https://www.vivino.com https://untappd.com;",
+    },
+    browser_specific_settings: {
+      gecko: {
+        id: 'broadcastdivers@test.com',
+      },
     },
   },
 });
