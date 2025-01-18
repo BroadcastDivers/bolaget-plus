@@ -1,10 +1,10 @@
 import sentinel from 'sentinel-js'
-import { loadSettingAsync } from '@/components/storage'
 import * as domUtils from '@/components/domUtils'
 import { fetchUntappdRating, fetchVivinoRating } from '@/components/api'
 import { translations } from '../translations'
 import * as productUtils from '@/components/productUtils'
 import { RatingResultStatus, type RatingResponse } from '@/@types/messages'
+import { wineFeatureEnabled } from '@/components/settings'
 
 // TODO: this is required for WXT, look into it or make it fetch settings from storage?
 export default defineContentScript({
@@ -19,6 +19,11 @@ let fetchingRatingInProgress = false
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
 // biome-ignore lint/suspicious/noExplicitAny: <explanation>
 async function tryInsertOnProdcutPage(_: any) {
+  // check if extension is enabled
+  const enabled = await featuresEnabled.getValue()
+  if (!enabled) {
+    return
+  }
   const url = window.location?.href
   if (
     !url ||
@@ -32,6 +37,10 @@ async function tryInsertOnProdcutPage(_: any) {
   if (fetchingRatingInProgress) {
     return
   }
+
+  // FETCH SETTINGS - TODO:
+  const wineEnabled = wineFeatureEnabled.getValue()
+  const beerEnabled = beerFeatureEnabled.getValue()
 
   domUtils.injectRatingContainer()
   if (
