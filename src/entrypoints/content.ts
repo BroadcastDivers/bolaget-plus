@@ -1,10 +1,14 @@
 import sentinel from 'sentinel-js'
 import * as domUtils from '@/components/domUtils'
-import { fetchUntappdRating, fetchVivinoRating } from '@/components/api'
+import { fetchRatingFromUntappd, fetchRating } from '@/components/api'
 import { translations } from '../translations'
 import * as productUtils from '@/components/productUtils'
-import { RatingResultStatus, type RatingResponse } from '@/@types/messages'
 import { wineFeatureEnabled } from '@/components/settings'
+import {
+  ProductType,
+  RatingResultStatus,
+  type RatingResponse
+} from '@/@types/types'
 
 // TODO: this is required for WXT, look into it or make it fetch settings from storage?
 export default defineContentScript({
@@ -24,17 +28,9 @@ async function tryInsertOnProdcutPage(_: any) {
   if (!enabled) {
     return
   }
-  const url = window.location?.href
-  if (
-    !url ||
-    !['/produkt/vin/', '/produkt/sprit/', '/produkt/ol/'].some((path) =>
-      url.includes(path)
-    )
-  ) {
-    return
-  }
 
-  if (fetchingRatingInProgress) {
+  const productType = productUtils.getProductType()
+  if (fetchingRatingInProgress || productType === ProductType.Uncertain) {
     return
   }
 
@@ -43,62 +39,47 @@ async function tryInsertOnProdcutPage(_: any) {
   const beerEnabled = beerFeatureEnabled.getValue()
 
   domUtils.injectRatingContainer()
-  if (
-    window.location?.href.includes('/produkt/vin/') &&
-    !productUtils.isBottle()
-  ) {
+
+  if (productType == ProductType.Wine && !productUtils.isBottle()) {
     domUtils.setMessage(translations.notOnBottle)
     return
   }
 
-  fetchingRatingInProgress = true
   const productName = productUtils.getProductName()
   if (!productName) {
     return
   }
 
   try {
+    fetchingRatingInProgress = true
     domUtils.showLoadingSpinner()
 
-    if (window.location.href.includes('/produkt/vin/')) {
-      await handleRating(fetchVivinoRating, productName, 'wine')
-    }
-
-    if (window.location.href.includes('/produkt/ol/')) {
-      await handleRating(fetchUntappdRating, productName, 'beer')
-    }
+    const rating = await fetchRating(productName, productType)
+    await handleRating(productType, rating)
   } catch (error) {
     console.error(`Error fetching rating for ${productName}:`, error)
+    domUtils.setMessage(translations.noMatch)
   } finally {
     fetchingRatingInProgress = false
   }
 }
 
-async function handleRating(
-  fetchRatingFunction: (productName: string) => Promise<RatingResponse | null>,
-  productName: string,
-  type: 'wine' | 'beer'
-) {
-  const response = await fetchRatingFunction(productName)
-  console.log('Response:', response)
+async function handleRating(productType: ProductType, rating: RatingResponse) {
+  console.log('Response:', rating)
 
-  if (!response) return
-
-  switch (response?.status) {
+  switch (rating.status) {
     case RatingResultStatus.NotFound:
       domUtils.setMessage(translations.noMatch)
       return
     case RatingResultStatus.Uncertain:
-      domUtils.setUncertain(response.link)
+      domUtils.setUncertain(rating.link)
       return
-    // case RatingResultStatus.Found:
-    //   break;
   }
 
-  if (type === 'wine') {
-    domUtils.setWineRating(response.rating, response.votes, response.link)
-  } else if (type === 'beer') {
-    // domUtils.setRating('beer', response.rating, response.votes, response.link);
-    domUtils.setWineRating(response.rating, response.votes, response.link)
+  if (productType === ProductType.Wine) {
+    domUtils.setWineRating(rating.rating, rating.votes, rating.link)
+  } else if (productType === ProductType.Beer) {
+    // TODO: implement this
+    domUtils.setWineRating(rating.rating, rating.votes, rating.link)
   }
 }
