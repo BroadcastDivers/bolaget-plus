@@ -1,3 +1,5 @@
+import { ProductType } from '@/@types/types'
+
 export function getProductName(): string | null {
   const headerChildren = document.querySelector('main h1')?.children
 
@@ -16,6 +18,19 @@ export function getProductName(): string | null {
     : secondLine
 
   return `${firstLine} ${secondLineWithoutComma}`.trim()
+}
+
+export function getProductType(): ProductType {
+  const url = window.location.href
+  if (url.includes('/produkt/vin/')) {
+    return ProductType.Wine
+  }
+
+  if (url.includes('/produkt/ol/')) {
+    return ProductType.Beer
+  }
+
+  return ProductType.Uncertain
 }
 
 export function isBottle(): boolean {
