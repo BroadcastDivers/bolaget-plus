@@ -7,6 +7,7 @@ import {
 } from '@/@types/types'
 import * as cheerio from 'cheerio'
 import stringSimilarity from 'string-similarity'
+import { saveRating as cacheRating, tryGetRating } from './ratingsCache'
 
 const NAME_MATCH_THRESHOLD = 0.5
 
@@ -36,6 +37,11 @@ export async function fetchRatingFromVivino(
   const url = `https://www.vivino.com/search/wines?q=${encodeURIComponent(
     query
   )}`
+
+  const cachedRating = await tryGetRating(url)
+  if (cachedRating) {
+    return cachedRating
+  }
 
   try {
     const response = await fetch(url, {
@@ -97,6 +103,9 @@ export async function fetchRatingFromVivino(
       rating,
       votes
     } as RatingResponse
+
+    cacheRating(url, vivinoResponse)
+
     return vivinoResponse
   } catch (error) {
     console.error('Error:', error)
@@ -110,6 +119,11 @@ export async function fetchRatingFromUntappd(
   const url = `https://untappd.com/search?q=${encodeURIComponent(
     productName
   )}&type=beer&sort=all`
+
+  const cachedRating = await tryGetRating(url)
+  if (cachedRating) {
+    return cachedRating
+  }
 
   try {
     const response = await fetch(url, {
@@ -138,13 +152,17 @@ export async function fetchRatingFromUntappd(
     const votes = 0
     const ratingNum = parseFloat(rating.replace('(', '').replace(')', ''))
 
-    return {
+    const ratingResponse = {
       status: RatingResultStatus.Found,
       name: name,
       votes: votes,
       link: link,
       rating: ratingNum
     } as RatingResponse
+
+    cacheRating(url, ratingResponse)
+    return ratingResponse
+
   } catch (error) {
     console.error('Error:', error)
     return { status: RatingResultStatus.NotFound } as RatingResponse
