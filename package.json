@@ -21,6 +21,7 @@
 		"@types/chrome": "^0.0.280",
 		"@types/string-similarity": "^4.0.2",
 		"@types/webextension-polyfill": "^0.12.1",
+		"@wxt-dev/auto-icons": "^1.0.2",
 		"eslint-plugin-perfectionist": "^4.7.0",
 		"prettier": "^3.4.1",
 		"typescript": "^5.6.3",
