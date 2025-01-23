@@ -1,4 +1,4 @@
-import { RatingResponse } from '@/@types/types'
+import { RatingRequest, RatingResponse } from '@/@types/types'
 import { storage } from 'wxt/storage'
 
 const CACHE_EXPIRATION_DAYS = 1
@@ -8,13 +8,18 @@ function calculateDaysDifference(date1: Date, date2: Date): number {
   return diffTime / (1000 * 3600 * 24)
 }
 
+function generateCacheKey(ratingRequest: RatingRequest): `local:${string}` {
+  return `local:ratings:${ratingRequest.productName}-${ratingRequest.query}`
+}
+
 export async function saveRating(
-  requestUrl: string,
+  ratingRequest: RatingRequest,
   rating: RatingResponse
 ): Promise<void> {
+  const key = generateCacheKey(ratingRequest)
   await Promise.all([
-    storage.setItem(`local:ratings:${requestUrl}`, rating),
-    storage.setMeta(`local:ratings:${requestUrl}`, {
+    storage.setItem(key, rating),
+    storage.setMeta(key, {
       datetime: new Date().toISOString()
     })
   ])
@@ -23,28 +28,21 @@ export async function saveRating(
 }
 
 export async function tryGetRating(
-  requestUrl: string
+  ratingRequest: RatingRequest
 ): Promise<RatingResponse | null> {
-  const cachedRating = await storage.getItem<RatingResponse>(
-    `local:ratings:${requestUrl}`
-  )
-  if (!cachedRating) {
+  const key = generateCacheKey(ratingRequest)
+  const cachedRating = await storage.getItem<RatingResponse>(key)
+  const metadata = await storage.getMeta<{ datetime: string }>(key)
+  if (!cachedRating || !metadata) {
     return null
   }
-
-  const metadata = await storage.getMeta<{ datetime: string }>(
-    `local:ratings:${requestUrl}`
+  const diffDays = calculateDaysDifference(
+    new Date(metadata.datetime),
+    new Date()
   )
-  if (!metadata) {
-    return null
-  }
-
-  const cachedDate = new Date(metadata.datetime)
-  const now = new Date()
-  const diffDays = calculateDaysDifference(cachedDate, now)
 
   if (diffDays > CACHE_EXPIRATION_DAYS) {
-    await storage.removeItem(`local:ratings:${requestUrl}`, {
+    await storage.removeItem(key, {
       removeMeta: true
     })
     return null
