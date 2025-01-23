@@ -2,8 +2,8 @@ import browser from 'webextension-polyfill'
 import {
   ProductType,
   RatingResultStatus,
-  type GetRating,
-  type RatingResponse
+  RatingRequest,
+  RatingResponse
 } from '@/@types/types'
 import * as cheerio from 'cheerio'
 import stringSimilarity from 'string-similarity'
@@ -16,14 +16,17 @@ export async function fetchRating(
   type: ProductType
 ): Promise<RatingResponse> {
   try {
+    const ratingRequest = { productName, query: type }
+    const cachedRating = await tryGetRating(ratingRequest)
+    if (cachedRating) {
+      return cachedRating
+    }
     const response = await browser.runtime.sendMessage<
-      GetRating,
+      RatingRequest,
       RatingResponse
-    >({
-      query: type,
-      productName
-    })
+    >(ratingRequest)
 
+    await cacheRating(ratingRequest, response)
     return response
   } catch (error) {
     console.error(`Failed to fetch rating for ${productName}:`, error)
@@ -37,11 +40,6 @@ export async function fetchRatingFromVivino(
   const url = `https://www.vivino.com/search/wines?q=${encodeURIComponent(
     query
   )}`
-
-  const cachedRating = await tryGetRating(url)
-  if (cachedRating) {
-    return cachedRating
-  }
 
   try {
     const response = await fetch(url, {
@@ -104,8 +102,6 @@ export async function fetchRatingFromVivino(
       votes
     } as RatingResponse
 
-    cacheRating(url, vivinoResponse)
-
     return vivinoResponse
   } catch (error) {
     console.error('Error:', error)
@@ -119,11 +115,6 @@ export async function fetchRatingFromUntappd(
   const url = `https://untappd.com/search?q=${encodeURIComponent(
     productName
   )}&type=beer&sort=all`
-
-  const cachedRating = await tryGetRating(url)
-  if (cachedRating) {
-    return cachedRating
-  }
 
   try {
     const response = await fetch(url, {
@@ -160,9 +151,7 @@ export async function fetchRatingFromUntappd(
       rating: ratingNum
     } as RatingResponse
 
-    cacheRating(url, ratingResponse)
     return ratingResponse
-
   } catch (error) {
     console.error('Error:', error)
     return { status: RatingResultStatus.NotFound } as RatingResponse

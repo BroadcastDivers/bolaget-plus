@@ -10,7 +10,7 @@ export enum RatingResultStatus {
   Found = 'found'
 }
 
-export type GetRating = {
+export type RatingRequest = {
   query: ProductType
   productName: string
 }
