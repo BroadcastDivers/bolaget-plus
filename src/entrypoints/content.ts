@@ -65,21 +65,15 @@ async function tryInsertOnProdcutPage(_: any) {
 }
 
 async function handleRating(productType: ProductType, rating: RatingResponse) {
-  console.log('Response:', rating)
-
   switch (rating.status) {
-    case RatingResultStatus.NotFound:
-      domUtils.setMessage(translations.noMatch)
+    case RatingResultStatus.Found:
+      domUtils.setRating(productType, rating.rating, rating.votes, rating.link)
       return
     case RatingResultStatus.Uncertain:
-      domUtils.setUncertain(rating.link)
+      domUtils.setUncertain(productType, rating.link)
       return
-  }
-
-  if (productType === ProductType.Wine) {
-    domUtils.setWineRating(rating.rating, rating.votes, rating.link)
-  } else if (productType === ProductType.Beer) {
-    // TODO: implement this
-    domUtils.setWineRating(rating.rating, rating.votes, rating.link)
+    default:
+      domUtils.setMessage(translations.noMatch)
+      return
   }
 }

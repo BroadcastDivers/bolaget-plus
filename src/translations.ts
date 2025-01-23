@@ -1,12 +1,14 @@
 // translations.ts
 export const translations = {
-  noMatch: 'Ingen träff hos Vivino!',
+  noMatch: 'Tyvärr, vi kunde inte hitta något betyg för denna produkt.',
   uncertainMatch:
-    'Kunde ej finna en säker match hos Vivino, du kan söka själv via länken nedan.',
+    'Kunde inte hitta en exakt matchning, du kan själv söka via länken nedan.',
   notOnBottle: 'Vinet är inte på flaska',
   loading: 'Laddar...',
   linkToVivino: 'Länk till Vivino',
+  linkToUntapped: 'Länk till Untapped',
   searchAtVivino: 'Sök hos Vivino',
+  searchAtUntapped: 'Sök hos Untapped',
   rating: 'Betyg',
   votes: 'röster',
   of: 'av'
