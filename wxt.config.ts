@@ -19,11 +19,11 @@ export default defineConfig({
   srcDir: 'src',
   manifest: {
     icons: {
-      16: 'icons/icon.png',
-      32: 'icons/icon.png',
-      48: 'icons/icon.png',
-      96: 'icons/icon.png',
-      128: 'icons/icon.png',
+      16: 'icons/16.png',
+      32: 'icons/32.png',
+      48: 'icons/48.png',
+      96: 'icons/96.png',
+      128: 'icons/128.png',
     },
     permissions: [
       'activeTab',
