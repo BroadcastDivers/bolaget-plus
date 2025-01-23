@@ -1,3 +1,4 @@
+import { ProductType } from '@/@types/types'
 import { translations } from '../translations'
 
 const RATING_CONTAINER_ID = 'rating-container'
@@ -50,7 +51,8 @@ export function setMessage(message: string) {
   ratingContainer.innerHTML = `<div style="color: #856404; text-align: center;">${message}</div>`
 }
 
-export function setWineRating(
+export function setRating(
+  productType: ProductType,
   rating: number,
   votes: number,
   link: string | null
@@ -73,13 +75,21 @@ export function setWineRating(
   linkElement.target = '_blank'
   linkElement.rel = 'noopener noreferrer'
   linkElement.style.cssText = 'color: #155724; text-decoration: underline;'
-  linkElement.innerText = translations.linkToVivino
+
+  switch (productType) {
+    case ProductType.Wine:
+      linkElement.innerText = translations.linkToVivino
+      break
+    case ProductType.Beer:
+      linkElement.innerText = translations.linkToUntapped
+      break
+  }
 
   ratingContainer.appendChild(ratingElement)
   ratingContainer.appendChild(linkElement)
 }
 
-export function setUncertain(link: string | null) {
+export function setUncertain(productType: ProductType, link: string | null) {
   const ratingContainer = getAndClearContainer()
 
   const ratingElement = document.createElement('div')
@@ -93,7 +103,15 @@ export function setUncertain(link: string | null) {
   linkElement.target = '_blank'
   linkElement.rel = 'noopener noreferrer'
   linkElement.style.cssText = 'color: #155724; text-decoration: underline;'
-  linkElement.innerText = translations.searchAtVivino
+
+  switch (productType) {
+    case ProductType.Wine:
+      linkElement.innerText = translations.searchAtVivino
+      break
+    case ProductType.Beer:
+      linkElement.innerText = translations.searchAtUntapped
+      break
+  }
 
   ratingContainer.appendChild(ratingElement)
   ratingContainer.appendChild(linkElement)
