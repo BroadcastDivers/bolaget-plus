@@ -2,6 +2,7 @@ import { defineConfig } from 'wxt';
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
+  modules: ['@wxt-dev/auto-icons'],
   runner: {
     startUrls: [
       'about:debugging#/runtime/this-firefox',
@@ -18,11 +19,11 @@ export default defineConfig({
   srcDir: 'src',
   manifest: {
     icons: {
-      16: 'icon/icon.png',
-      32: 'icon/icon.png',
-      48: 'icon/icon.png',
-      96: 'icon/icon.png',
-      128: 'icon/icon.png',
+      16: 'icons/icon.png',
+      32: 'icons/icon.png',
+      48: 'icons/icon.png',
+      96: 'icons/icon.png',
+      128: 'icons/icon.png',
     },
     permissions: [
       'activeTab',
