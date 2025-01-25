@@ -3,7 +3,7 @@ import {
   type RatingResponse,
   RatingResultStatus
 } from '@/@types/types'
-import { fetchRating, fetchRatingFromUntappd } from '@/components/api'
+import { fetchRating } from '@/components/api'
 import * as domUtils from '@/components/domUtils'
 import * as productUtils from '@/components/productUtils'
 import { wineFeatureEnabled } from '@/components/settings'

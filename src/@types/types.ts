@@ -1,28 +1,28 @@
 export enum ProductType {
+  Beer = 'beer',
   Uncertain = 'uncertain',
-  Wine = 'wine',
-  Beer = 'beer'
+  Wine = 'wine'
 }
 
 export enum RatingResultStatus {
+  Found = 'found',
   NotFound = 'not_found',
-  Uncertain = 'uncertain',
-  Found = 'found'
-}
-
-export type RatingRequest = {
-  query: ProductType
-  productName: string
-}
-
-export type RatingResponse = {
-  status: RatingResultStatus
-  name: string | null
-  rating: number
-  votes: number
-  link: string | null
+  Uncertain = 'uncertain'
 }
 
 export type BeerResponse = RatingResponse & {
-  brewery: string | null
+  brewery: null | string
+}
+
+export interface RatingRequest {
+  productName: string
+  query: ProductType
+}
+
+export interface RatingResponse {
+  link: null | string
+  name: null | string
+  rating: number
+  status: RatingResultStatus
+  votes: number
 }

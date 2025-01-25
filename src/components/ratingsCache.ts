@@ -3,15 +3,6 @@ import { storage } from 'wxt/storage'
 
 const CACHE_EXPIRATION_DAYS = 1
 
-function calculateDaysDifference(date1: Date, date2: Date): number {
-  const diffTime = date2.getTime() - date1.getTime()
-  return diffTime / (1000 * 3600 * 24)
-}
-
-function generateCacheKey(ratingRequest: RatingRequest): `local:${string}` {
-  return `local:ratings:${ratingRequest.productName}-${ratingRequest.query}`
-}
-
 export async function saveRating(
   ratingRequest: RatingRequest,
   rating: RatingResponse
@@ -29,7 +20,7 @@ export async function saveRating(
 
 export async function tryGetRating(
   ratingRequest: RatingRequest
-): Promise<RatingResponse | null> {
+): Promise<null | RatingResponse> {
   const key = generateCacheKey(ratingRequest)
   const cachedRating = await storage.getItem<RatingResponse>(key)
   const metadata = await storage.getMeta<{ datetime: string }>(key)
@@ -49,4 +40,13 @@ export async function tryGetRating(
   }
 
   return cachedRating
+}
+
+function calculateDaysDifference(date1: Date, date2: Date): number {
+  const diffTime = date2.getTime() - date1.getTime()
+  return diffTime / (1000 * 3600 * 24)
+}
+
+function generateCacheKey(ratingRequest: RatingRequest): `local:${string}` {
+  return `local:ratings:${ratingRequest.productName}-${ratingRequest.query}`
 }

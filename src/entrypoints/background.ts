@@ -1,9 +1,9 @@
 import { type RatingRequest, ProductType } from '@/@types/types'
-import { fetchRatingFromVivino } from '@/components/api'
+import { fetchRatingFromVivino, fetchRatingFromUntappd } from '@/components/api'
 import browser from 'webextension-polyfill'
 
 export default defineBackground(() => {
-  console.log('Running with id:', { id: browser.runtime.id })
+  // console.log('Running with id:', { id: browser.runtime.id })
 })
 
 function isGetRatingMessage(message: unknown): message is RatingRequest {

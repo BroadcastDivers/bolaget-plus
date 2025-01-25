@@ -1,18 +1,18 @@
 import { ProductType } from '@/@types/types'
 
-export function getProductName(): string | null {
+export function getProductName(): null | string {
   const headerChildren = document.querySelector('main h1')?.children
 
   if (!headerChildren || headerChildren.length === 0) {
     return null
   }
 
-  const firstLine = (headerChildren[0] as HTMLElement)?.innerText.trim() ?? ''
+  const firstLine = (headerChildren[0] as HTMLElement).innerText.trim() ?? ''
   if (headerChildren.length === 1) {
     return firstLine
   }
 
-  const secondLine = (headerChildren[1] as HTMLElement)?.innerText.trim() ?? ''
+  const secondLine = (headerChildren[1] as HTMLElement).innerText.trim() ?? ''
   const secondLineWithoutComma = secondLine.includes(',')
     ? secondLine.slice(0, secondLine.lastIndexOf(',')).trim()
     : secondLine
@@ -46,7 +46,7 @@ export function isBottle(): boolean {
       p.textContent?.toLowerCase().includes(BOTTLE_STRING)
     ) !== undefined
 
-  if (isBottle === false) {
+  if (!isBottle) {
     isBottle =
       Array.from(productContainer.querySelectorAll('option'))
         .map((i) => i.innerText.toLowerCase())

@@ -2,9 +2,9 @@
 export const version = '1.0.0'
 
 // TODO: Wip
-type GitHubRelease = {
-  tag_name: string
+interface GitHubRelease {
   html_url: string
+  tag_name: string
 }
 
 // TODO: WIP - needs cache

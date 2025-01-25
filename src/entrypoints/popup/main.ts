@@ -18,7 +18,6 @@ async function checkForUpdate(
 }
 
 async function initialize(): Promise<void> {
-  // Setting up the toggles
   await setupToggles()
 
   const shareButton = document.getElementById('shareButton')
@@ -35,7 +34,6 @@ async function initialize(): Promise<void> {
 }
 
 async function setupToggles(): Promise<void> {
-  // Main feature toggle
   const enabledToggle = document.getElementById('enabled') as HTMLInputElement
   enabledToggle.checked = await featuresEnabled.getValue()
   enabledToggle.addEventListener('change', async () => {
@@ -56,12 +54,10 @@ async function setupToggles(): Promise<void> {
 }
 
 async function shareExtension(): Promise<void> {
-  const extensionUrl = 'https://addons.mozilla.org/en-US/firefox/extensions/'
+  const extensionUrl = 'https://addons.mozilla.org/en-US/firefox/extensions/' //TODO:
   try {
     await navigator.clipboard.writeText(extensionUrl)
-  } catch (err) {
-    console.error('Failed to copy URL:', err) //TODO: set eslint no-console
-  }
+  } catch (err) {}
 }
 
 document.addEventListener('DOMContentLoaded', initialize)
