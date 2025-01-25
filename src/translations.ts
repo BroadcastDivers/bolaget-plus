@@ -11,6 +11,7 @@ export const translations = {
   searchAtVivino: 'Sök hos Vivino',
   uncertainMatch:
     'Kunde inte hitta en exakt matchning, du kan själv söka via länken nedan.',
-  votes: 'röster'
+  votes: 'röster',
+  brewery: 'Bryggeri'
   // Add more translations as needed
 }
