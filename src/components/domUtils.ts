@@ -10,6 +10,7 @@ export function getAndClearContainer(): HTMLElement {
   if (!container) {
     injectRatingContainer()
   }
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   container = document.getElementById(RATING_CONTAINER_BODY_ID)!
   container.innerHTML = ''
   return container
@@ -78,10 +79,8 @@ export function setRating(
   ratingElement.style.cssText = 'display: flex; align-items: center; gap: 5px;'
   ratingElement.innerHTML = `
       <strong>${translations.rating}:</strong>
-      ${svg}  (${rating} ${translations.of} ${votes} ${translations.votes})
+      ${svg}  (${rating.toString()} ${translations.of} ${votes.toString()} ${translations.votes})
     `
-
-  console.debug(`(${rating} ${translations.of} ${votes} ${translations.votes})`)
 
   const linkElement = document.createElement('a')
   if (link) {

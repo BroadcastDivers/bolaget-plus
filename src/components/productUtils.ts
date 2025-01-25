@@ -7,11 +7,13 @@ export function getProductName(): null | string {
     return null
   }
 
+  //eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   const firstLine = (headerChildren[0] as HTMLElement).innerText.trim() ?? ''
   if (headerChildren.length === 1) {
     return firstLine
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   const secondLine = (headerChildren[1] as HTMLElement).innerText.trim() ?? ''
   const secondLineWithoutComma = secondLine.includes(',')
     ? secondLine.slice(0, secondLine.lastIndexOf(',')).trim()

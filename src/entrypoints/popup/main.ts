@@ -28,9 +28,7 @@ async function initialize(): Promise<void> {
   const installUpdateButton = document.getElementById(
     'updateButton'
   ) as HTMLButtonElement
-  if (installUpdateButton || installUpdateButton != null) {
-    await checkForUpdate(installUpdateButton)
-  }
+  await checkForUpdate(installUpdateButton)
 }
 
 async function setupToggles(): Promise<void> {
@@ -57,7 +55,10 @@ async function shareExtension(): Promise<void> {
   const extensionUrl = 'https://addons.mozilla.org/en-US/firefox/extensions/' //TODO:
   try {
     await navigator.clipboard.writeText(extensionUrl)
-  } catch (err) {}
+  } catch {
+    //eslint-disable-next-line no-console
+    console.error('Failed to copy extension URL to clipboard')
+  }
 }
 
 document.addEventListener('DOMContentLoaded', initialize)

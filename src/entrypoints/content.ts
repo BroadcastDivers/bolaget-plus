@@ -32,7 +32,7 @@ async function featureEnabled(productType: ProductType): Promise<boolean> {
   return true
 }
 
-async function handleRating(productType: ProductType, rating: RatingResponse) {
+function handleRating(productType: ProductType, rating: RatingResponse) {
   switch (rating.status) {
     case RatingResultStatus.Found:
       domUtils.setRating(productType, rating.rating, rating.votes, rating.link)
@@ -46,7 +46,7 @@ async function handleRating(productType: ProductType, rating: RatingResponse) {
   }
 }
 
-async function tryInsertOnProdcutPage(_: any) {
+async function tryInsertOnProdcutPage() {
   if (!(await featuresEnabled.getValue())) return
 
   const productType = productUtils.getProductType()
@@ -74,9 +74,8 @@ async function tryInsertOnProdcutPage(_: any) {
     domUtils.showLoadingSpinner()
 
     const rating = await fetchRating(productName, productType)
-    await handleRating(productType, rating)
-  } catch (error) {
-    console.error(`Error fetching rating for ${productName}:`, error)
+    handleRating(productType, rating)
+  } catch {
     domUtils.setMessage(translations.noMatch)
   } finally {
     fetchingRatingInProgress = false

@@ -16,14 +16,11 @@ export async function getLatestRelease(): Promise<GitHubRelease | null> {
   try {
     const response = await fetch(url)
     if (!response.ok) {
-      console.error('Failed to fetch latest release')
       return null
     }
-    const release: GitHubRelease = await response.json()
+    const release: GitHubRelease = (await response.json()) as GitHubRelease
     return release
-    //
-  } catch (error) {
-    console.error('Error fetching latest release:', error)
+  } catch {
     return null
   }
 }

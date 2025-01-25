@@ -1,5 +1,5 @@
-import { type RatingRequest, ProductType } from '@/@types/types'
-import { fetchRatingFromVivino, fetchRatingFromUntappd } from '@/components/api'
+import { ProductType, type RatingRequest } from '@/@types/types'
+import { fetchRatingFromUntappd, fetchRatingFromVivino } from '@/components/api'
 import browser from 'webextension-polyfill'
 
 export default defineBackground(() => {
