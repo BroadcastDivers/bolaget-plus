@@ -5,36 +5,6 @@ import {
   wineFeatureEnabled
 } from '@/components/settings'
 
-async function setupToggles(): Promise<void> {
-  // Main feature toggle
-  const enabledToggle = document.getElementById('enabled') as HTMLInputElement
-  enabledToggle.checked = await featuresEnabled.getValue()
-  enabledToggle.addEventListener('change', async () => {
-    await featuresEnabled.setValue(enabledToggle.checked)
-  })
-
-  const wineToggle = document.getElementById('vin') as HTMLInputElement
-  wineToggle.checked = await wineFeatureEnabled.getValue()
-  wineToggle.addEventListener('change', async () => {
-    await wineFeatureEnabled.setValue(wineToggle.checked)
-  })
-
-  // const beerToggle = document.getElementById('ol') as HTMLInputElement
-  // beerToggle.checked = await beerFeatureEnabled.getValue()
-  // beerToggle.addEventListener('change', async () => {
-  //   await beerFeatureEnabled.setValue(beerToggle.checked)
-  // })
-}
-
-async function shareExtension(): Promise<void> {
-  const extensionUrl = 'https://addons.mozilla.org/en-US/firefox/extensions/'
-  try {
-    await navigator.clipboard.writeText(extensionUrl)
-  } catch (err) {
-    console.error('Failed to copy URL:', err) //TODO: set eslint no-console
-  }
-}
-
 async function checkForUpdate(
   installUpdateButton: HTMLButtonElement
 ): Promise<void> {
@@ -61,6 +31,36 @@ async function initialize(): Promise<void> {
   ) as HTMLButtonElement
   if (installUpdateButton || installUpdateButton != null) {
     await checkForUpdate(installUpdateButton)
+  }
+}
+
+async function setupToggles(): Promise<void> {
+  // Main feature toggle
+  const enabledToggle = document.getElementById('enabled') as HTMLInputElement
+  enabledToggle.checked = await featuresEnabled.getValue()
+  enabledToggle.addEventListener('change', async () => {
+    await featuresEnabled.setValue(enabledToggle.checked)
+  })
+
+  const wineToggle = document.getElementById('vin') as HTMLInputElement
+  wineToggle.checked = await wineFeatureEnabled.getValue()
+  wineToggle.addEventListener('change', async () => {
+    await wineFeatureEnabled.setValue(wineToggle.checked)
+  })
+
+  const beerToggle = document.getElementById('ol') as HTMLInputElement
+  beerToggle.checked = await beerFeatureEnabled.getValue()
+  beerToggle.addEventListener('change', async () => {
+    await beerFeatureEnabled.setValue(beerToggle.checked)
+  })
+}
+
+async function shareExtension(): Promise<void> {
+  const extensionUrl = 'https://addons.mozilla.org/en-US/firefox/extensions/'
+  try {
+    await navigator.clipboard.writeText(extensionUrl)
+  } catch (err) {
+    console.error('Failed to copy URL:', err) //TODO: set eslint no-console
   }
 }
 
