@@ -35,7 +35,7 @@ async function featureEnabled(productType: ProductType): Promise<boolean> {
 function handleRating(productType: ProductType, rating: RatingResponse) {
   switch (rating.status) {
     case RatingResultStatus.Found:
-      domUtils.setRating(productType, rating.rating, rating.votes, rating.link)
+      domUtils.setRating(productType, rating, rating.link)
       return
     case RatingResultStatus.Uncertain:
       domUtils.setUncertain(productType, rating.link)

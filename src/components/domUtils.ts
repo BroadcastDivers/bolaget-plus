@@ -1,6 +1,7 @@
-import { ProductType } from '@/@types/types'
+import { BeerResponse, ProductType, RatingResponse } from '@/@types/types'
 
 import { translations } from '../translations'
+import { Rating } from 'string-similarity'
 
 const RATING_CONTAINER_ID = 'rating-container'
 const RATING_CONTAINER_BODY_ID = 'rating-container-body'
@@ -65,22 +66,30 @@ export function setMessage(message: string) {
 
 export function setRating(
   productType: ProductType,
-  rating: number,
-  votes: number,
+  rating: RatingResponse,
   link: null | string
 ) {
   const ratingContainer = getAndClearContainer()
 
   const svg =
     productType === ProductType.Wine
-      ? generateStarsSvg(rating)
-      : generateCapSvg(rating)
+      ? generateStarsSvg(rating.rating)
+      : generateCapSvg(rating.rating)
+
   const ratingElement = document.createElement('div')
   ratingElement.style.cssText = 'display: flex; align-items: center; gap: 5px;'
   ratingElement.innerHTML = `
-      <strong>${translations.rating}:</strong>
-      ${svg}  (${rating.toString()} ${translations.of} ${votes.toString()} ${translations.votes})
-    `
+        <strong>${translations.rating}:</strong>
+        ${svg}  (${rating.rating.toString()})
+      `
+
+  const breweryElement = document.createElement('p')
+  if (productType === ProductType.Beer) {
+    const beerRating = rating as BeerResponse
+    breweryElement.innerText = `${translations.brewery}: ${beerRating.brewery}`
+    breweryElement.style.cssText =
+      'color: #155724; margin: 0; line-height: 1.5;'
+  }
 
   const linkElement = document.createElement('a')
   if (link) {
@@ -88,7 +97,8 @@ export function setRating(
   }
   linkElement.target = '_blank'
   linkElement.rel = 'noopener noreferrer'
-  linkElement.style.cssText = 'color: #155724; text-decoration: underline;'
+  linkElement.style.cssText =
+    'color: #155724; text-decoration: underline; margin: 0; line-height: 1.5;'
 
   switch (productType) {
     case ProductType.Beer:
@@ -99,8 +109,21 @@ export function setRating(
       break
   }
 
+  const flexContainer = document.createElement('div')
+  flexContainer.style.cssText =
+    'display: flex; justify-content: space-between; align-items: center;'
+
+  const leftContainer = document.createElement('div')
+  leftContainer.appendChild(linkElement)
+
+  const rightContainer = document.createElement('div')
+  rightContainer.appendChild(breweryElement)
+
+  flexContainer.appendChild(leftContainer)
+  flexContainer.appendChild(rightContainer)
+
   ratingContainer.appendChild(ratingElement)
-  ratingContainer.appendChild(linkElement)
+  ratingContainer.appendChild(flexContainer)
 }
 
 export function setUncertain(productType: ProductType, link: null | string) {
