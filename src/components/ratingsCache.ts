@@ -24,7 +24,7 @@ export async function tryGetRating(
   const key = generateCacheKey(ratingRequest)
   const cachedRating = await storage.getItem<RatingResponse>(key)
   const metadata = await storage.getMeta<{ datetime: string }>(key)
-  if (!cachedRating || !metadata) {
+  if (!cachedRating || !metadata.datetime) {
     return null
   }
   const diffDays = calculateDaysDifference(

@@ -30,8 +30,7 @@ export async function fetchRating(
 
     await cacheRating(ratingRequest, response)
     return response
-  } catch (error) {
-    console.error(`Failed to fetch rating for ${productName}:`, error)
+  } catch {
     return { status: RatingResultStatus.NotFound } as RatingResponse
   }
 }
@@ -62,24 +61,24 @@ export async function fetchRatingFromUntappd(
 
     const name = beerCard.find('.name').first().text().trim()
     const brewery = beerCard.find('.brewery').first().text().trim()
-    const link = `https://untappd.com${beerCard.find('a').first().attr('href')}`
+    const href = beerCard.find('a').first().attr('href') ?? ''
+    const link = `https://untappd.com/${href}`
     const rating = beerCard.find('.num').first().text().trim()
 
     const votes = 0 //TODO: need to scrape the link to get the number of votes.
     const ratingNum = parseFloat(rating.replace('(', '').replace(')', ''))
 
     const beerResponse = {
+      brewery: brewery,
       link: link,
       name: name,
       rating: ratingNum,
       status: RatingResultStatus.Found,
-      votes: votes,
-      brewery: brewery
+      votes: votes
     } as BeerResponse
 
     return beerResponse
-  } catch (error) {
-    console.error('Error:', error)
+  } catch {
     return { status: RatingResultStatus.NotFound } as RatingResponse
   }
 }
@@ -140,10 +139,12 @@ export async function fetchRatingFromVivino(
 
     // TODO: Handle case when there are no/too few ratings
 
-    const linkElement = wineCard
-      .find('a[data-cartitemsource="text-search"]')
-      .first()
-    const link = `https://www.vivino.com/${linkElement.attr('href')}`
+    const linkElement =
+      wineCard
+        .find('a[data-cartitemsource="text-search"]')
+        .first()
+        .attr('href') ?? ''
+    const link = `https://www.vivino.com/${linkElement}`
     const vivinoResponse = {
       link,
       name,
@@ -153,8 +154,7 @@ export async function fetchRatingFromVivino(
     } as RatingResponse
 
     return vivinoResponse
-  } catch (error) {
-    console.error('Error:', error)
+  } catch {
     return { status: RatingResultStatus.NotFound } as RatingResponse
   }
 }
