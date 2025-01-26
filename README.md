@@ -34,9 +34,28 @@ Install dependencies with [pnpm](https://pnpm.io/)
 pnpm install
 ```
 
-Run it in either chrome or firefox:
+Run it in either Chrome or Firefox:
 
 ```sh
 pnpm dev:firefox
 pnpm dev:chrome
 ```
+
+## Publish
+
+```sh
+pnpm install
+```
+
+Publish to either Chrome or Firefox:
+
+```sh
+pnpm zip:chrome
+pnpm zip:firefox
+```
+
+The output is located in the `.output` folder.
+
+---
+
+This extension is using the WXT framework. Read more about [WXT](https://wxt.dev/guide/essentials/project-structure) here.
