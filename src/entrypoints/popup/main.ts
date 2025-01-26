@@ -1,3 +1,4 @@
+/* eslint @typescript-eslint/no-misused-promises: 1 */
 import { getLatestRelease, version } from '@/components/github'
 import {
   beerFeatureEnabled,
@@ -22,6 +23,7 @@ async function initialize(): Promise<void> {
 
   const shareButton = document.getElementById('shareButton')
   if (shareButton) {
+    //eslint-disable-next-line @typescript-eslint/no-misused-promises
     shareButton.addEventListener('click', shareExtension)
   }
 
