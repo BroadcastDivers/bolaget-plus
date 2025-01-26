@@ -87,7 +87,7 @@ export function setRating(
   const breweryElement = document.createElement('p')
   if (productType === ProductType.Beer) {
     const beerRating = rating as BeerResponse
-    breweryElement.innerText = `${translations.brewery}: ${beerRating.brewery}`
+    breweryElement.innerText = `${translations.brewery}: ${beerRating.brewery ?? ''}`
     breweryElement.style.cssText =
       'color: #155724; margin: 0; line-height: 1.5;'
   }

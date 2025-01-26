@@ -1,5 +1,6 @@
 // translations.ts
 export const translations = {
+  brewery: 'Bryggeri',
   linkToUntapped: 'Länk till Untapped',
   linkToVivino: 'Länk till Vivino',
   loading: 'Laddar...',
@@ -11,7 +12,6 @@ export const translations = {
   searchAtVivino: 'Sök hos Vivino',
   uncertainMatch:
     'Kunde inte hitta en exakt matchning, du kan själv söka via länken nedan.',
-  votes: 'röster',
-  brewery: 'Bryggeri'
+  votes: 'röster'
   // Add more translations as needed
 }

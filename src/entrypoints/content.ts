@@ -14,6 +14,7 @@ import { translations } from '../translations'
 // TODO: this is required for WXT, look into it or make it fetch settings from storage?
 export default defineContentScript({
   main() {
+    //eslint-disable-next-line @typescript-eslint/no-misused-promises
     sentinel.on('h1', tryInsertOnProdcutPage)
   },
   matches: ['*://*.systembolaget.se/*']
