@@ -1,4 +1,4 @@
-# Systembolaget ratings
+# Bolaget+
 
 A browser plugin for Systembolaget.se that shows ratings directly at systembolagets website!
 
