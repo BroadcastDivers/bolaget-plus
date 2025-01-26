@@ -1,7 +1,6 @@
 import { BeerResponse, ProductType, RatingResponse } from '@/@types/types'
 
 import { translations } from '../translations'
-import { Rating } from 'string-similarity'
 
 const RATING_CONTAINER_ID = 'rating-container'
 const RATING_CONTAINER_BODY_ID = 'rating-container-body'
@@ -78,6 +77,8 @@ export function setRating(
 
   const ratingElement = document.createElement('div')
   ratingElement.style.cssText = 'display: flex; align-items: center; gap: 5px;'
+  // removed the snippet below due to not always having number of votes
+  // (${rating.rating} ${translations.of} ${votes} ${translations.votes})
   ratingElement.innerHTML = `
         <strong>${translations.rating}:</strong>
         ${svg}  (${rating.rating.toString()})
@@ -171,9 +172,9 @@ function generateCapSvg(rating: number): string {
   const maxCaps = 5
   const yellowCollor = '#ffc000'
   const grayColor = '#d8d8d8'
-  const heightAndWidth = '48px'
+  const heightAndWidth = '28px'
   const capSvg = (fill: string) => `
-  <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="${heightAndWidth}" height="${heightAndWidth}" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="${heightAndWidth}" height="${heightAndWidth}" viewBox="0 0 50 50" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd" xmlns:xlink="http://www.w3.org/1999/xlink">
     <g><path style="opacity:0.954" fill="${fill}" d="M 20.5,-0.5 C 22.1667,-0.5 23.8333,-0.5 25.5,-0.5C 25.8656,0.694594 26.699,1.36126 28,1.5C 31.7073,-0.156277 34.2073,1.01039 35.5,5C 39.7905,4.43599 41.9571,6.26933 42,10.5C 45.7611,11.7146 46.9277,14.048 45.5,17.5C 45.4534,19.0377 46.1201,20.0377 47.5,20.5C 47.5,21.8333 47.5,23.1667 47.5,24.5C 46.4749,25.3739 45.8082,26.5405 45.5,28C 47.1563,31.7073 45.9896,34.2073 42,35.5C 42.564,39.7905 40.7307,41.9571 36.5,42C 35.3336,45.5714 33.1669,46.7381 30,45.5C 28.3009,45.3866 27.1342,46.0532 26.5,47.5C 25.1667,47.5 23.8333,47.5 22.5,47.5C 21.6261,46.4749 20.4595,45.8082 19,45.5C 15.2927,47.1563 12.7927,45.9896 11.5,42C 7.20953,42.564 5.04286,40.7307 5,36.5C 1.42855,35.3336 0.261888,33.1669 1.5,30C 1.61345,28.3009 0.94678,27.1342 -0.5,26.5C -0.5,25.1667 -0.5,23.8333 -0.5,22.5C 0.525111,21.6261 1.19178,20.4595 1.5,19C -0.156277,15.2927 1.01039,12.7927 5,11.5C 4.43599,7.20953 6.26933,5.04286 10.5,5C 11.6664,1.42855 13.8331,0.261888 17,1.5C 18.6991,1.61345 19.8658,0.94678 20.5,-0.5 Z"/></g>
   </svg>
   `
@@ -184,7 +185,7 @@ function generateCapSvg(rating: number): string {
       capsHtml += capSvg(yellowCollor)
     } else if (rating >= i + 0.5) {
       capsHtml += `
-      <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="${heightAndWidth}" height="${heightAndWidth}" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd" xmlns:xlink="http://www.w3.org/1999/xlink">
+      <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="${heightAndWidth}" height="${heightAndWidth}" viewBox="0 0 50 50" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd" xmlns:xlink="http://www.w3.org/1999/xlink">
         <defs>
           <linearGradient id="halfStarGradient">
             <stop offset="50%" stop-color="${yellowCollor}" />
