@@ -25,8 +25,7 @@ export function injectRatingContainer() {
   ratingContainer.style.cssText =
     'background-color: #fff3cd; padding: 10px; margin-top: 10px; border: 1px solid #ffeeba; border-radius: 4px; font-family: Arial, sans-serif; font-size: 14px;'
 
-  const header =
-    '<h3 style="color: #856404; text-align: center;">Bolaget+</h3>'
+  const header = '<h3 style="color: #856404; text-align: center;">Bolaget+</h3>'
 
   ratingContainer.innerHTML = header
 
