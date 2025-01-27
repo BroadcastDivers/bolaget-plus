@@ -41,13 +41,14 @@ export async function fetchRatingFromUntappd(
   const url = `https://untappd.com/search?q=${encodeURIComponent(
     productName
   )}&type=beer&sort=all`
+  const headers = {
+    'User-Agent':
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+  }
 
   try {
     const response = await fetch(url, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
-      }
+      headers
     })
 
     if (!response.ok) {
@@ -63,10 +64,19 @@ export async function fetchRatingFromUntappd(
     const brewery = beerCard.find('.brewery').first().text().trim()
     const href = beerCard.find('a').first().attr('href') ?? ''
     const link = `https://untappd.com/${href}`
+
     const rating = beerCard.find('.num').first().text().trim()
 
-    const votes = 0 //TODO: need to scrape the link to get the number of votes.
     const ratingNum = parseFloat(rating.replace('(', '').replace(')', ''))
+
+    const responseDetailPage = await fetch(link, {
+      headers
+    })
+
+    const detailHtml = await responseDetailPage.text()
+    const detailCard = cheerio.load(detailHtml)('.details').first()
+    const lastParagraph = detailCard.find('p').last()
+    const votes = parseInt(lastParagraph.text().replace(/[^0-9]/g, ''), 10)
 
     const beerResponse = {
       brewery: brewery,

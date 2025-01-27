@@ -76,11 +76,9 @@ export function setRating(
 
   const ratingElement = document.createElement('div')
   ratingElement.style.cssText = 'display: flex; align-items: center; gap: 5px;'
-  // removed the snippet below due to not always having number of votes
-  // (${rating.rating} ${translations.of} ${votes} ${translations.votes})
   ratingElement.innerHTML = `
         <strong>${translations.rating}:</strong>
-        ${svg}  (${rating.rating.toString()})
+        ${svg}  (${rating.rating} ${translations.of} ${rating.votes} ${translations.votes})
       `
 
   const breweryElement = document.createElement('p')
