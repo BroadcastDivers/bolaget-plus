@@ -78,7 +78,7 @@ export function setRating(
   ratingElement.style.cssText = 'display: flex; align-items: center; gap: 5px;'
   ratingElement.innerHTML = `
         <strong>${translations.rating}:</strong>
-        ${svg}  (${rating.rating} ${translations.of} ${rating.votes} ${translations.votes})
+        ${svg}  (${rating.rating.toString()} ${translations.of} ${rating.votes.toString()} ${translations.votes})
       `
 
   const breweryElement = document.createElement('p')
