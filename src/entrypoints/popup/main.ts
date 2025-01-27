@@ -40,13 +40,13 @@ async function setupToggles(): Promise<void> {
     await featuresEnabled.setValue(enabledToggle.checked)
   })
 
-  const wineToggle = document.getElementById('vin') as HTMLInputElement
+  const wineToggle = document.getElementById('wine') as HTMLInputElement
   wineToggle.checked = await wineFeatureEnabled.getValue()
   wineToggle.addEventListener('change', async () => {
     await wineFeatureEnabled.setValue(wineToggle.checked)
   })
 
-  const beerToggle = document.getElementById('ol') as HTMLInputElement
+  const beerToggle = document.getElementById('beer') as HTMLInputElement
   beerToggle.checked = await beerFeatureEnabled.getValue()
   beerToggle.addEventListener('change', async () => {
     await beerFeatureEnabled.setValue(beerToggle.checked)
@@ -54,7 +54,7 @@ async function setupToggles(): Promise<void> {
 }
 
 async function shareExtension(): Promise<void> {
-  const extensionUrl = 'https://addons.mozilla.org/en-US/firefox/extensions/' //TODO:
+  const extensionUrl = 'https://addons.mozilla.org/firefox/addon/bolaget-plus/'
   try {
     await navigator.clipboard.writeText(extensionUrl)
   } catch {
