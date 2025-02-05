@@ -1,5 +1,5 @@
 import { defineConfig } from 'wxt';
-
+const isProduction = process.env.NODE_ENV === 'production';
 // See https://wxt.dev/api/config.html
 export default defineConfig({
   modules: ['@wxt-dev/auto-icons'],
@@ -31,11 +31,11 @@ export default defineConfig({
       '*://*.vivino.com/*',
       '*://*.untappd.com/*',
       'clipboardWrite',
-      'ws://localhost:3000/',
+       // Conditionally include permissions based on the build environment
+       ...(isProduction ? [] : ['ws://localhost:3000/']),
     ],
     content_security_policy: {
-      extension_pages:
-        "script-src 'self'; object-src 'self'; connect-src ws://localhost:3000/ 'self' https://www.vivino.com https://untappd.com;",
+      extension_pages: `script-src 'self'; object-src 'self'; connect-src 'self' https://www.vivino.com https://untappd.com;${isProduction ? '' : ' ws://localhost:3000/'}`,
     },
     browser_specific_settings: {
       gecko: {
