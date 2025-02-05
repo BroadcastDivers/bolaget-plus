@@ -2,7 +2,7 @@
   "name": "bolaget-plus",
   "description": "manifest.json description",
   "private": true,
-  "version": "1.0.0-alpha",
+  "version": "1.0.2",
   "type": "module",
   "author": "BroadcastDivers",
   "scripts": {
