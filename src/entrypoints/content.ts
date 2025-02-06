@@ -50,6 +50,12 @@ function handleRating(productType: ProductType, rating: RatingResponse) {
 async function tryInsertOnProdcutPage() {
   if (!(await featuresEnabled.getValue())) return
 
+
+  if (productUtils.isOnSortimentPage()) {
+    domUtils.injectRatingContainers()
+   return 
+  }
+
   const productType = productUtils.getProductType()
   if (
     fetchingRatingInProgress ||

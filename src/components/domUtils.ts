@@ -54,6 +54,47 @@ export function injectRatingContainer() {
   }
 }
 
+// TODO: Return objects with html element ids and product information
+export async function injectRatingContainers() {
+  const mainElement = document.querySelector('main')
+  if (!mainElement) {
+    return
+  }
+  await new Promise((resolve) => setTimeout(resolve, 1000))
+  const parentElements = mainElement.children[1].children[1].children[1].children[1].children[2].children 
+
+  for (let i = 0; i < parentElements.length; i++) {
+    const parentDiv = document.createElement('div');
+    parentDiv.style.cssText = `background-color: #fff3cd; padding: 10px; margin-top: 10px; border: 1px solid #ffeeba; border-radius: 4px; font-family: Arial, sans-serif; font-size: 14px;`;
+
+    const newElement = document.createElement('div');
+    newElement.style.cssText = `display: flex; align-items: center; gap: 5px;`;
+
+    // Create spinner element
+    const spinner = document.createElement('div');
+    spinner.className = 'spinner'; // Assuming you have a CSS class for the spinner
+    spinner.style.cssText = `width: 20px; height: 20px; border: 2px solid #f3f3f3; border-top: 2px solid #3498db; border-radius: 50%; animation: spin 1s linear infinite;`;
+
+    // Add spinner and text to newElement
+    newElement.innerHTML = `<div style="color: #856404; text-align: center;">1 of 5</div>`;
+    newElement.appendChild(spinner);
+
+    parentDiv.appendChild(newElement);
+    parentElements[i].appendChild(parentDiv);
+}
+
+// Add CSS for spinner animation
+const style = document.createElement('style');
+style.innerHTML = `
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+`;
+document.head.appendChild(style);
+}
+
+
 export function setMessage(message: string) {
   const ratingContainer = document.getElementById(RATING_CONTAINER_BODY_ID)
   if (!ratingContainer) {

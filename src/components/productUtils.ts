@@ -57,3 +57,7 @@ export function isBottle(): boolean {
 
   return isBottle
 }
+
+export function isOnSortimentPage() {
+  return window.location.href.includes('/sortiment/')
+}
