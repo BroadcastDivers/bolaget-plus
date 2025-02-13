@@ -25,17 +25,21 @@ export default defineConfig({
       128: 'icons/128.png',
     },
     permissions: [
-      'activeTab',
       'storage',
-      'webRequest',
       '*://*.vivino.com/*',
       '*://*.untappd.com/*',
       'clipboardWrite',
        // Conditionally include permissions based on the build environment
        ...(isProduction ? [] : ['ws://localhost:3000/']),
     ],
+
+    host_permissions: [
+      'https://www.systembolaget.se/*',
+      'https://www.vivino.com/*',
+      'https://untappd.com/*',
+    ],
     content_security_policy: {
-      extension_pages: `script-src 'self'; object-src 'self'; connect-src 'self' https://www.vivino.com https://untappd.com;${isProduction ? '' : ' ws://localhost:3000/'}`,
+      extension_pages: `script-src 'self'; object-src 'self'; connect-src 'self' https://www.vivino.com https://untappd.com${isProduction ? '' : ' ws://localhost:3000/'};`,
     },
     browser_specific_settings: {
       gecko: {
