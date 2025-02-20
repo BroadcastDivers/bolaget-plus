@@ -18,6 +18,7 @@ export async function fetchRating(
   type: ProductType
 ): Promise<RatingResponse> {
   try {
+    console.log('fetchRating', productName, type)
     const ratingRequest = { productName, query: type }
     const cachedRating = await tryGetRating(ratingRequest)
     if (cachedRating) {
@@ -56,8 +57,11 @@ export async function fetchRatingFromUntappd(
     }
 
     const html = await response.text()
-    const $ = cheerio.load(html)
+    if (html.includes('We didn\'t find any beers matching')) {
+      return { status: RatingResultStatus.NotFound } as RatingResponse
+    }
 
+    const $ = cheerio.load(html)
     const beerCard = $('.beer-item').first()
 
     const name = beerCard.find('.name').first().text().trim()
