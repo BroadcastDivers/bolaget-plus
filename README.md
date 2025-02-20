@@ -8,9 +8,7 @@ Systembolaget Ratings is a browser extension that provides ratings for products 
 
 ## Installation
 
-[![Download Firefox Extension](https://img.shields.io/badge/Download-Firefox%20Extension-orange?logo=firefox)](https://addons.mozilla.org/firefox/addon/bolaget-plus)
-
-<!-- [![Download Chrome Extension](https://img.shields.io/badge/Download-Chrome%20Extension-blue?logo=google-chrome)](https://chrome.google.com/webstore/detail/bolaget-plus/) -->
+[![Download Firefox Extension](https://img.shields.io/badge/Download-Firefox%20Extension-orange?logo=firefox)](https://addons.mozilla.org/firefox/addon/bolaget-plus) [![Download Chrome Extension](https://img.shields.io/badge/Download-Chrome%20Extension-blue?logo=google-chrome)](https://chromewebstore.google.com/detail/bolaget-plus/bbjfkhmnofhindccdlfmhkibfafiogao)
 
 Or download the latest zip from the [Github Releases](https://github.com/BroadcastDivers/bolaget-plus/releases) page and install it in your browser.
 
