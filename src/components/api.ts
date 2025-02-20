@@ -11,8 +11,6 @@ import browser from 'webextension-polyfill'
 
 import { saveRating as cacheRating, tryGetRating } from './ratingsCache'
 
-const NAME_MATCH_THRESHOLD = 0.5
-
 export async function fetchRating(
   productName: string,
   type: ProductType
@@ -64,6 +62,14 @@ export async function fetchRatingFromUntappd(
     const beerCard = $('.beer-item').first()
 
     const name = beerCard.find('.name').first().text().trim()
+    const similarityRate = stringSimilarity.compareTwoStrings(productName, name)
+    if (similarityRate < 0.2) {
+      return {
+        link: url,
+        status: RatingResultStatus.Uncertain
+      } as RatingResponse
+    }
+
     const brewery = beerCard.find('.brewery').first().text().trim()
     const href = beerCard.find('a').first().attr('href') ?? ''
     const link = `https://untappd.com/${href}`
@@ -123,7 +129,7 @@ export async function fetchRatingFromVivino(
     const name = wineCard.find('.wine-card__name').first().text().trim()
 
     const similarityRate = stringSimilarity.compareTwoStrings(query, name)
-    if (similarityRate < NAME_MATCH_THRESHOLD) {
+    if (similarityRate < 0.5) {
       return {
         link: url,
         status: RatingResultStatus.Uncertain
