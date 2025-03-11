@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@wxt-dev/i18n':
         specifier: ^0.2.3
-        version: 0.2.3(wxt@0.19.23(@types/node@22.10.1)(rollup@4.28.1))
+        version: 0.2.3(wxt@0.19.27(@types/node@22.13.2)(rollup@4.34.6))
       cheerio:
         specifier: ^1.0.0
         version: 1.0.0
@@ -3344,13 +3344,13 @@ snapshots:
       sharp: 0.33.5
       wxt: 0.19.27(@types/node@22.13.2)(rollup@4.34.6)
 
-  '@wxt-dev/i18n@0.2.3(wxt@0.19.23(@types/node@22.10.1)(rollup@4.28.1))':
+  '@wxt-dev/i18n@0.2.3(wxt@0.19.27(@types/node@22.13.2)(rollup@4.34.6))':
     dependencies:
       chokidar: 3.6.0
       confbox: 0.1.8
-      fast-glob: 3.3.2
+      fast-glob: 3.3.3
     optionalDependencies:
-      wxt: 0.19.23(@types/node@22.10.1)(rollup@4.28.1)
+      wxt: 0.19.27(@types/node@22.13.2)(rollup@4.34.6)
 
   '@wxt-dev/storage@1.1.0':
     dependencies:
