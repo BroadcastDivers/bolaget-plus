@@ -1,6 +1,5 @@
 import { BeerResponse, ProductType, RatingResponse } from '@/@types/types'
-
-import { translations } from '../translations'
+import { i18n } from '#i18n'
 
 const RATING_CONTAINER_ID = 'rating-container'
 const RATING_CONTAINER_BODY_ID = 'rating-container-body'
@@ -77,14 +76,14 @@ export function setRating(
   const ratingElement = document.createElement('div')
   ratingElement.style.cssText = 'display: flex; align-items: center; gap: 5px;'
   ratingElement.innerHTML = `
-        <strong>${translations.rating}:</strong>
-        ${svg}  (${rating.rating.toString()} ${translations.of} ${rating.votes.toString()} ${translations.votes})
+        <strong>${i18n.t('rating')}:</strong>
+        ${svg}  (${rating.rating.toString()} ${i18n.t('of')} ${rating.votes.toString()} ${i18n.t('votes')})
       `
 
   const breweryElement = document.createElement('p')
   if (productType === ProductType.Beer) {
     const beerRating = rating as BeerResponse
-    breweryElement.innerText = `${translations.brewery}: ${beerRating.brewery ?? ''}`
+    breweryElement.innerText = `${i18n.t('brewery')}: ${beerRating.brewery ?? ''}`
     breweryElement.style.cssText =
       'color: #155724; margin: 0; line-height: 1.5;'
   }
@@ -100,10 +99,10 @@ export function setRating(
 
   switch (productType) {
     case ProductType.Beer:
-      linkElement.innerText = translations.linkToUntapped
+      linkElement.innerText = i18n.t('linkToUntapped')
       break
     case ProductType.Wine:
-      linkElement.innerText = translations.linkToVivino
+      linkElement.innerText = i18n.t('linkToVivino')
       break
   }
 
@@ -129,7 +128,7 @@ export function setUncertain(productType: ProductType, link: null | string) {
 
   const ratingElement = document.createElement('div')
   ratingElement.style.cssText = 'display: flex; align-items: center; gap: 5px;'
-  ratingContainer.innerHTML = `<div style="color: #856404; text-align: center;">${translations.uncertainMatch}</div>`
+  ratingContainer.innerHTML = `<div style="color: #856404; text-align: center;">${i18n.t('uncertainMatch')}</div>`
 
   const linkElement = document.createElement('a')
   if (link) {
@@ -141,10 +140,10 @@ export function setUncertain(productType: ProductType, link: null | string) {
 
   switch (productType) {
     case ProductType.Beer:
-      linkElement.innerText = translations.searchAtUntapped
+      linkElement.innerText = i18n.t('searchAtUntapped')
       break
     case ProductType.Wine:
-      linkElement.innerText = translations.searchAtVivino
+      linkElement.innerText = i18n.t('searchAtVivino')
       break
   }
 
@@ -159,7 +158,7 @@ export function showLoadingSpinner() {
     'display: flex; justify-content: center; align-items: center; height: 50px; gap: 10px;'
   spinner.innerHTML = `
       <div class="spinner" style="border: 4px solid #f3f3f3; border-top: 4px solid #095741; border-radius: 50%; width: 30px; height: 30px; animation: spin 2s linear infinite;"></div>
-      <span style="font-size: 14px; color: #856404;">${translations.loading}..</span>
+      <span style="font-size: 14px; color: #856404;">${i18n.t('loading')}..</span>
     `
 
   ratingContainer.appendChild(spinner)
