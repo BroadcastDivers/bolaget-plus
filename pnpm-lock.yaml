@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@wxt-dev/i18n':
+        specifier: ^0.2.3
+        version: 0.2.3(wxt@0.19.23(@types/node@22.10.1)(rollup@4.28.1))
       cheerio:
         specifier: ^1.0.0
         version: 1.0.0
@@ -800,6 +803,14 @@ packages:
     resolution: {integrity: sha512-Wp1pZnRysvDvxkkkys6ZPXL9O2Q9RDjooAZeV19vBg4NXPyE21qO2fu3QmIcug3fPzKzpcFa6dm1Y1dX8qhfEg==}
     peerDependencies:
       wxt: '>=0.19.0'
+
+  '@wxt-dev/i18n@0.2.3':
+    resolution: {integrity: sha512-2X005PB1r+6sDYMOuZD5hxSOPkogEZZTLB5HEsOotQ5RYXF3c/OOMD+DffVeq+S0yKY2Dmg4Ujfu0Pq4busJYQ==}
+    peerDependencies:
+      wxt: '>=0.19.7'
+    peerDependenciesMeta:
+      wxt:
+        optional: true
 
   '@wxt-dev/storage@1.1.0':
     resolution: {integrity: sha512-veya6MAc8B531W/zgm7JcCQa254B2YsMb3h9D48kUUghBDMKXqoioKSfVWEF+TbbswsMP3H9qfZ2bobNKcP+2g==}
@@ -3332,6 +3343,14 @@ snapshots:
       fs-extra: 11.3.0
       sharp: 0.33.5
       wxt: 0.19.27(@types/node@22.13.2)(rollup@4.34.6)
+
+  '@wxt-dev/i18n@0.2.3(wxt@0.19.23(@types/node@22.10.1)(rollup@4.28.1))':
+    dependencies:
+      chokidar: 3.6.0
+      confbox: 0.1.8
+      fast-glob: 3.3.2
+    optionalDependencies:
+      wxt: 0.19.23(@types/node@22.10.1)(rollup@4.28.1)
 
   '@wxt-dev/storage@1.1.0':
     dependencies:
