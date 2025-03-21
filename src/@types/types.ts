@@ -26,3 +26,21 @@ export interface RatingResponse {
   status: RatingResultStatus
   votes: number
 }
+
+export interface VivinoMatch {
+  vintage: {
+    id: number
+    name: string
+    region?: {
+      name: string
+    }
+    statistics: {
+      ratings_average: null | number
+      ratings_count: null | number
+    }
+  }
+}
+
+export interface VivinoReponseJSON {
+  search_results?: { matches: VivinoMatch[] }
+}
