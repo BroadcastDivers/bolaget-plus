@@ -19,7 +19,7 @@ test('visiting wine page shows rating-container', async ({
   await page.waitForSelector('#rating-container')
 
   // assert
-  assert(page.locator('#rating-container'))
+  await expect(page.locator('#rating-container')).toBeVisible()
 })
 
 test('visiting beer page shows rating-container with votes', async ({
@@ -64,7 +64,8 @@ test('visiting a wine page with wine toggle disabled should not show wine', asyn
   await page.reload()
 
   // assert
-  assert(!page.locator('#rating-container'))
+  // assert(!page.locator('#rating-container'))
+  await expect(page.locator('#rating-container')).not.toBeVisible()
 })
 
 //TODO: Add a test that checks a wine page and also checks that there is a
