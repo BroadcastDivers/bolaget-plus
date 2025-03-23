@@ -67,3 +67,6 @@ web-ext.config.ts
 *.sln
 *.sw?
 
+# playwright
+playwright-report/
+test-results/.last-run.json
