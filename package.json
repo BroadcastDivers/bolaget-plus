@@ -16,16 +16,20 @@
     "postinstall": "wxt prepare",
     "ft": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
     "lint": "eslint src/**/*.{js,jsx,ts,tsx}",
-    "lint:fix": "eslint src/**/*.{js,jsx,ts,tsx} --fix"
+    "lint:fix": "eslint src/**/*.{js,jsx,ts,tsx} --fix",
+    "e2e": "playwright test",
+    "e2eui": "playwright test --ui"
   },
   "devDependencies": {
     "@eslint/js": "^9.20.0",
+    "@playwright/test": "^1.51.1",
     "@types/chrome": "^0.0.280",
     "@types/string-similarity": "^4.0.2",
     "@types/webextension-polyfill": "^0.12.1",
     "@wxt-dev/auto-icons": "^1.0.2",
     "eslint": "^9.20.1",
     "eslint-plugin-perfectionist": "^4.9.0",
+    "playwright": "^1.51.1",
     "prettier": "^3.5.1",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.24.0",
