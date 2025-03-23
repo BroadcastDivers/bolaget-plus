@@ -12,7 +12,8 @@ export default defineConfig({
   reporter: 'html',
   use: {
     // Collect trace when retrying the failed test.
-    trace: 'on-first-retry'
+    trace: 'on-first-retry',
+    headless: true
   },
   // Configure projects for major browsers.
   projects: [
