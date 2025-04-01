@@ -9,9 +9,6 @@ import * as productUtils from '@/components/productUtils'
 import { wineFeatureEnabled } from '@/components/settings'
 import sentinel from 'sentinel-js'
 
-import { translations } from '../translations'
-
-// TODO: this is required for WXT, look into it or make it fetch settings from storage?
 export default defineContentScript({
   main() {
     //eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -42,7 +39,7 @@ function handleRating(productType: ProductType, rating: RatingResponse) {
       domUtils.setUncertain(productType, rating.link)
       return
     default:
-      domUtils.setMessage(translations.noMatch)
+      domUtils.setMessage(i18n.t('noMatch'))
       return
   }
 }
@@ -61,7 +58,7 @@ async function tryInsertOnProdcutPage() {
 
   domUtils.injectRatingContainer()
   if (productType == ProductType.Wine && !productUtils.isBottle()) {
-    domUtils.setMessage(translations.notOnBottle)
+    domUtils.setMessage(i18n.t('notOnBottle'))
     return
   }
 
@@ -77,7 +74,7 @@ async function tryInsertOnProdcutPage() {
     const rating = await fetchRating(productName, productType)
     handleRating(productType, rating)
   } catch {
-    domUtils.setMessage(translations.noMatch)
+    domUtils.setMessage(i18n.t('noMatch'))
   } finally {
     fetchingRatingInProgress = false
   }
