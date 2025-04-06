@@ -37,6 +37,6 @@
     "cheerio": "^1.0.0",
     "sentinel-js": "^0.0.7",
     "string-similarity": "^4.0.4",
-    "vite": "^6.1.4"
+    "vite": "^6.2.5"
   }
 }
