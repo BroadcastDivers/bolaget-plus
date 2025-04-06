@@ -6,6 +6,8 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+permissions:
+  contents: read
 jobs:
   test:
     timeout-minutes: 60
@@ -25,8 +27,6 @@ jobs:
         run: pnpm install
       - name: Install Playwright Browsers
         run: pnpm playwright install --with-deps
-      # - name: Install xvfb
-      # run: sudo apt-get install -y xvfb
       - name: Build the project
         run: pnpm build:chrome
       - name: Run Playwright tests
