@@ -1,5 +1,5 @@
-import { BeerResponse, ProductType, RatingResponse } from '@/@types/types'
 import { i18n } from '#i18n'
+import { BeerResponse, ProductType, RatingResponse } from '@/@types/types'
 
 const RATING_CONTAINER_ID = 'rating-container'
 const RATING_CONTAINER_BODY_ID = 'rating-container-body'
