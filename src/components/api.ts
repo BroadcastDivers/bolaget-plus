@@ -1,7 +1,5 @@
 import {
   BeerResponse,
-  ProductType,
-  RatingRequest,
   RatingResponse,
   RatingResultStatus,
   VivinoMatch,
@@ -9,31 +7,6 @@ import {
 } from '@/@types/types'
 import * as cheerio from 'cheerio'
 import stringSimilarity from 'string-similarity'
-import browser from 'webextension-polyfill'
-
-import { saveRating as cacheRating, tryGetRating } from './ratingsCache'
-
-export async function fetchRating(
-  productName: string,
-  type: ProductType
-): Promise<RatingResponse> {
-  try {
-    const ratingRequest = { productName, query: type }
-    const cachedRating = await tryGetRating(ratingRequest)
-    if (cachedRating) {
-      return cachedRating
-    }
-    const response = await browser.runtime.sendMessage<
-      RatingRequest,
-      RatingResponse
-    >(ratingRequest)
-
-    await cacheRating(ratingRequest, response)
-    return response
-  } catch {
-    return { status: RatingResultStatus.NotFound } as RatingResponse
-  }
-}
 
 export async function fetchRatingFromUntappd(
   productName: string
@@ -89,7 +62,7 @@ export async function fetchRatingFromUntappd(
     const lastParagraph = detailCard.find('p').last()
     const votes = parseInt(lastParagraph.text().replace(/[^0-9]/g, ''), 10)
 
-    const beerResponse = {
+    return {
       brewery: brewery,
       link: link,
       name: name,
@@ -97,15 +70,14 @@ export async function fetchRatingFromUntappd(
       status: RatingResultStatus.Found,
       votes: votes
     } as BeerResponse
-
-    return beerResponse
   } catch {
     return { status: RatingResultStatus.NotFound } as RatingResponse
   }
 }
+
 export async function fetchRatingFromVivino(
   query: string
-): Promise<null | RatingResponse> {
+): Promise<RatingResponse> {
   const url = `https://www.vivino.com/search/wines?q=${encodeURIComponent(query)}`
 
   try {
@@ -126,6 +98,10 @@ export async function fetchRatingFromVivino(
     // Find the `data-preloaded-state` attribute
     const searchPageElement = $('#search-page')
     if (!searchPageElement.length) {
+      // TODO: need to figure out why we end up here sometimes
+      if ($('.wine-card__content').length >0) { 
+        console.log('Vivino: No preloaded state found, but wine cards exist.')
+      }
       return { status: RatingResultStatus.NotFound } as RatingResponse
     }
     const preloadedState = searchPageElement.attr('data-preloaded-state')

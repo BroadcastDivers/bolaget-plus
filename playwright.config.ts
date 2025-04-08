@@ -19,7 +19,14 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] }
+      use: { ...devices['Desktop Chrome'] },
+      testMatch: /.*\.spec\.ts/,
+      testIgnore: /api-integration\.spec\.ts/ // Exclude API tests from the chromium project
+    },
+    {
+      name: 'api',
+      testMatch: /api-integration\.spec\.ts/,
+      use: { }
     }
   ]
 })
