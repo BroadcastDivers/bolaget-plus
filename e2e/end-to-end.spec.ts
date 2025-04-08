@@ -64,9 +64,42 @@ test('visiting a wine page with wine toggle disabled should not show wine', asyn
   await page.reload()
 
   // assert
-  // assert(!page.locator('#rating-container'))
   await expect(page.locator('#rating-container')).not.toBeVisible()
 })
 
-//TODO: Add a test that checks a wine page and also checks that there is a
-// rating-container with votes. Blocked by https://github.com/BroadcastDivers/bolaget-plus/pull/56
+test('visiting a wine page shows rating-container with ratings and stars', async ({
+  page,
+  extensionId
+}) => {
+  // arrange
+  await page.goto(`chrome-extension://${extensionId}/popup.html`);
+  await page.waitForSelector('.settings');
+  await expect(page.locator('#enabled')).toBeChecked();
+  await expect(page.locator('#wine')).toBeChecked();
+
+  // act
+  await page.goto('https://www.systembolaget.se/produkt/vin/bread-butter-7667101/');
+  await page.getByRole('link', { name: 'Jag har fyllt 20 år' }).click();
+  await page.getByRole('button', { name: 'Slå på och acceptera alla' }).click();
+  await page.reload();
+
+  // Wait for the spinner to be removed
+  await page.waitForSelector('.spinner', { state: 'detached' });
+
+  await page.waitForSelector('#rating-container-body');
+
+  // assert
+  const ratingContainer = page.locator('#rating-container-body');
+  await expect(ratingContainer).toBeVisible();
+
+  const stars = ratingContainer.locator('svg');
+  await expect(stars).toHaveCount(5);
+
+  // Check for the presence of text indicating ratings (e.g., "votes" or "röster")
+  const ratingText = await ratingContainer.textContent();
+  expect(ratingText).toMatch(/(votes|röster)/i);
+
+  // Check for the Vivino link
+  const vivinoLink = ratingContainer.locator('a[href*="vivino.com"]');
+  await expect(vivinoLink).toBeVisible();
+});
