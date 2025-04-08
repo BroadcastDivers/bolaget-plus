@@ -30,9 +30,11 @@ jobs:
       - name: Build the project
         run: pnpm build:chrome
       - name: Run Playwright tests
-        run: xvfb-run pnpm playwright test
+        run: |
+          xvfb-run pnpm playwright test
+        shell: bash
       - uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
+        if: always()
         with:
           name: playwright-report
           path: playwright-report/
