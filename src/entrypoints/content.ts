@@ -3,9 +3,9 @@ import {
   type RatingResponse,
   RatingResultStatus
 } from '@/@types/types'
-import { fetchRating } from '@/components/api'
 import * as domUtils from '@/components/domUtils'
 import * as productUtils from '@/components/productUtils'
+import { fetchRating } from '@/components/ratingService'
 import { wineFeatureEnabled } from '@/components/settings'
 import sentinel from 'sentinel-js'
 
