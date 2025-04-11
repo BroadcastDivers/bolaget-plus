@@ -30,6 +30,7 @@ Install dependencies with [pnpm](https://pnpm.io/)
 
 ```sh
 pnpm install
+# Git hooks will be automatically installed
 ```
 
 Run it in either Chrome or Firefox:
