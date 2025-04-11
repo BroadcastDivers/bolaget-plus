@@ -6,6 +6,7 @@
   "type": "module",
   "author": "BroadcastDivers",
   "scripts": {
+    "prepare": "simple-git-hooks && wxt prepare",
     "dev:chrome": "wxt",
     "dev:firefox": "wxt -b firefox",
     "build:chrome": "wxt build",
@@ -13,7 +14,6 @@
     "zip:chrome": "wxt zip",
     "zip:firefox": "wxt zip -b firefox",
     "compile": "tsc --noEmit",
-    "postinstall": "wxt prepare",
     "ft": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
     "lint": "eslint src/**/*.{js,jsx,ts,tsx}",
     "lint:fix": "eslint src/**/*.{js,jsx,ts,tsx} --fix",
@@ -31,6 +31,7 @@
     "eslint-plugin-perfectionist": "^4.9.0",
     "playwright": "^1.51.1",
     "prettier": "^3.5.1",
+    "simple-git-hooks": "^2.12.1",
     "typescript": "^5.7.3",
     "typescript-eslint": "^8.24.0",
     "webextension-polyfill": "^0.12.0",
@@ -42,5 +43,8 @@
     "sentinel-js": "^0.0.7",
     "string-similarity": "^4.0.4",
     "vite": "^6.2.5"
+  },
+  "simple-git-hooks": {
+    "pre-push": "pnpm run ft && pnpm run lint"
   }
 }
