@@ -1,0 +1,36 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+      - run: pnpm install
+      
+      - name: Check types
+        run: pnpm compile
+        
+      - name: Check formatting
+        run: pnpm ft:check
+        
+      - name: Lint code
+        run: pnpm lint
+        
+      - name: Build project
+        run: pnpm build:chrome
+ 
