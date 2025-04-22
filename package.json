@@ -17,8 +17,8 @@
     "ft": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,scss,md}\"",
     "lint": "eslint src/**/*.{js,jsx,ts,tsx}",
     "lint:fix": "eslint src/**/*.{js,jsx,ts,tsx} --fix",
-    "e2e": "pnpm build:chrome && playwright test",
-    "e2eui": "playwright test --ui",
+    "test": "pnpm build:chrome && playwright test",
+    "test:interactive": "playwright test --ui",
     "test:api": "pnpm build:chrome && playwright test e2e/api-integration.spec.ts"
   },
   "devDependencies": {
