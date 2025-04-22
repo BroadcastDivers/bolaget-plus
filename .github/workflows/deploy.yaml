@@ -63,7 +63,7 @@ jobs:
         run: pnpm wxt build
       - name: Zip extensions
         run: |
-          pnpm run zip && 
+          pnpm run zip:chrome &&
           pnpm run zip:firefox
       - name: Submit to stores
         run: |
