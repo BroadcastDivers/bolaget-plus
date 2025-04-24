@@ -1,10 +1,18 @@
 # Bolaget+
 
+[![GitHub Release](https://img.shields.io/github/release/BroadcastDivers/bolaget-plus.svg?style=flat)]() [![Playwright Tests](https://github.com/BroadcastDivers/bolaget-plus/actions/workflows/playwright.yml/badge.svg)](https://github.com/BroadcastDivers/bolaget-plus/actions/workflows/playwright.yml)
+
 A browser plugin for Systembolaget.se that shows ratings directly at systembolagets website!
 
 ![screenshot](header.jpg)
 
-Systembolaget Ratings is a browser extension that provides ratings for products available on the Systembolaget website. The extension fetches ratings from [Vivino](https://www.vivino.com/) for wines and [Untappd](https://www.vivino.com/) for beers, displaying them directly on the product pages.
+## Features
+
+- Seamless integration with Systembolaget's website
+- Wine ratings from [Vivino](https://www.vivino.com/) with direct links to product pages
+- Beer ratings from [Untappd](https://untappd.com/) with direct links to product pages
+- Easy toggling of features through a simple popup interface
+- Works with both Firefox and Chrome browsers
 
 ## Installation
 
@@ -22,9 +30,7 @@ Or download the latest zip from the [Github Releases](https://github.com/Broadca
    - Disable beer ratings.
    - Disable the extension entirely.
 
-## Contributing
-
-This project is using the [wxt framework](https://wxt.dev/).
+## Development
 
 Install dependencies with [pnpm](https://pnpm.io/)
 
@@ -40,21 +46,28 @@ pnpm dev:firefox
 pnpm dev:chrome
 ```
 
-## Publish
+### Testing
+
+Run the tests with:
 
 ```sh
-pnpm install
+pnpm test
 ```
 
-Publish to either Chrome or Firefox:
+### Building
+
+Build the extension locally:
 
 ```sh
-pnpm zip:chrome
-pnpm zip:firefox
+pnpm build
 ```
 
 The output is located in the `.output` folder.
 
----
+## License
 
-This extension is using the WXT framework. Read more about [WXT](https://wxt.dev/guide/essentials/project-structure) here.
+This project is licensed under the [MIT License](LICENSE) - see the LICENSE file for details.
+
+## Framework
+
+This extension is built using the WXT framework. Learn more about [WXT](https://wxt.dev/guide/essentials/project-structure) here.
