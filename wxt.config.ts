@@ -45,6 +45,9 @@ export default defineConfig({
     browser_specific_settings: {
       gecko: {
         id: 'broadcastdivers@test.com'
+      },
+      gecko_android : {
+        strict_min_version: '120.0'
       }
     }
   }
