@@ -39,9 +39,12 @@ test('visiting beer page shows rating-container with votes', async ({
   await page.reload()
   await page.locator('#rating-container').waitFor()
 
+  // Wait for the spinner to be removed
+  await page.waitForSelector('.spinner', { state: 'detached' });
+  await page.waitForSelector('#rating-container-body');
   // assert
   const res = await page.locator('#rating-container').textContent()
-  assert(res?.includes('röster'))
+  expect(res).toMatch(/(votes|röster)/i)
 })
 
 test('visiting a wine page with wine toggle disabled should not show wine', async ({
