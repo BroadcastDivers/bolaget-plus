@@ -1,4 +1,3 @@
-/* eslint @typescript-eslint/no-misused-promises: 1 */
 import { getLatestRelease, version } from '@/components/github'
 import {
   beerFeatureEnabled,
@@ -23,8 +22,9 @@ async function initialize(): Promise<void> {
 
   const shareButton = document.getElementById('shareButton')
   if (shareButton) {
-    //eslint-disable-next-line @typescript-eslint/no-misused-promises
-    shareButton.addEventListener('click', shareExtension)
+    shareButton.addEventListener('click', () => {
+      void shareExtension()
+    })
   }
 
   const installUpdateButton = document.getElementById(
@@ -36,20 +36,20 @@ async function initialize(): Promise<void> {
 async function setupToggles(): Promise<void> {
   const enabledToggle = document.getElementById('enabled') as HTMLInputElement
   enabledToggle.checked = await featuresEnabled.getValue()
-  enabledToggle.addEventListener('change', async () => {
-    await featuresEnabled.setValue(enabledToggle.checked)
+  enabledToggle.addEventListener('change', () => {
+    void featuresEnabled.setValue(enabledToggle.checked)
   })
 
   const wineToggle = document.getElementById('wine') as HTMLInputElement
   wineToggle.checked = await wineFeatureEnabled.getValue()
-  wineToggle.addEventListener('change', async () => {
-    await wineFeatureEnabled.setValue(wineToggle.checked)
+  wineToggle.addEventListener('change', () => {
+    void wineFeatureEnabled.setValue(wineToggle.checked)
   })
 
   const beerToggle = document.getElementById('beer') as HTMLInputElement
   beerToggle.checked = await beerFeatureEnabled.getValue()
-  beerToggle.addEventListener('change', async () => {
-    await beerFeatureEnabled.setValue(beerToggle.checked)
+  beerToggle.addEventListener('change', () => {
+    void beerFeatureEnabled.setValue(beerToggle.checked)
   })
 }
 
@@ -63,4 +63,6 @@ async function shareExtension(): Promise<void> {
   }
 }
 
-document.addEventListener('DOMContentLoaded', initialize)
+document.addEventListener('DOMContentLoaded', () => {
+  void initialize()
+})
