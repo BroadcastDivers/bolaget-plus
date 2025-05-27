@@ -1,10 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { fetchRatingFromVivino, fetchRatingFromUntappd } from '../src/components/api';
+import  * as vivino from '../src/services/integrations/vivino';
+import * as untappd from '../src/services/integrations/untappd';
 import { RatingResultStatus } from '../src/@types/types';
 
 test.describe('API Integration Tests', () => {
-  test('fetchRatingFromVivino returns data for valid query', async () => {
-    const result = await fetchRatingFromVivino('Bread & Butter');
+  test('vivino.getRating returns data for valid query', async () => {
+    const result = await vivino.getRating('Bread & Butter');
     
     expect(result).not.toBeNull();
     expect(result?.status).toBe(RatingResultStatus.Found);
@@ -13,8 +14,8 @@ test.describe('API Integration Tests', () => {
     expect(result?.link).toContain('vivino.com');
   });
 
-  test('fetchRatingFromUntappd returns data for valid query', async () => {
-    const result = await fetchRatingFromUntappd('Pabst Blue Ribbon');
+  test('untappd.getRating returns data for valid query', async () => {
+    const result = await untappd.getRating('Pabst Blue Ribbon');
     
     expect(result).not.toBeNull();
     expect(result?.status).toBe(RatingResultStatus.Found);

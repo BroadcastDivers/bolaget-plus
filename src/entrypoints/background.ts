@@ -1,10 +1,11 @@
 import browser from 'webextension-polyfill'
 
 import { ProductType, type RatingRequest } from '@/@types/types'
-import { fetchRatingFromUntappd, fetchRatingFromVivino } from '@/components/api'
+import * as untappd from '@/services/integrations/untappd'
+import * as vivino from '@/services/integrations/vivino'
 
 export default defineBackground(() => {
-  // console.log('Running with id:', { id: browser.runtime.id })
+  // This is the background script entry point
 })
 
 function isGetRatingMessage(message: unknown): message is RatingRequest {
@@ -23,8 +24,8 @@ browser.runtime.onMessage.addListener(async (message: unknown) => {
   const { productName, query } = message
   switch (query) {
     case ProductType.Beer:
-      return await fetchRatingFromUntappd(productName)
+      return await untappd.getRating(productName)
     case ProductType.Wine:
-      return await fetchRatingFromVivino(productName)
+      return await vivino.getRating(productName)
   }
 })

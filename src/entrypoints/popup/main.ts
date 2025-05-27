@@ -1,9 +1,9 @@
-import { getLatestRelease, version } from '@/components/github'
+import { getLatestRelease, version } from '@/services/integrations/github'
 import {
   beerFeatureEnabled,
   featuresEnabled,
   wineFeatureEnabled
-} from '@/components/settings'
+} from '@/stores/settings'
 
 async function checkForUpdate(
   installUpdateButton: HTMLButtonElement
