@@ -1,6 +1,7 @@
+import browser from 'webextension-polyfill'
+
 import { ProductType, type RatingRequest } from '@/@types/types'
 import { fetchRatingFromUntappd, fetchRatingFromVivino } from '@/components/api'
-import browser from 'webextension-polyfill'
 
 export default defineBackground(() => {
   // console.log('Running with id:', { id: browser.runtime.id })

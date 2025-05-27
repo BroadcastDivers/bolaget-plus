@@ -1,3 +1,5 @@
+import sentinel from 'sentinel-js'
+
 import {
   ProductType,
   type RatingResponse,
@@ -7,7 +9,6 @@ import * as domUtils from '@/components/domUtils'
 import * as productUtils from '@/components/productUtils'
 import { fetchRating } from '@/components/ratingService'
 import { wineFeatureEnabled } from '@/components/settings'
-import sentinel from 'sentinel-js'
 
 export default defineContentScript({
   main() {

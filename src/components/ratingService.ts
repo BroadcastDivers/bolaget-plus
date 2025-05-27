@@ -1,10 +1,11 @@
+import browser from 'webextension-polyfill'
+
 import {
   ProductType,
   RatingRequest,
   RatingResponse,
   RatingResultStatus
 } from '@/@types/types'
-import browser from 'webextension-polyfill'
 
 import { saveRating as cacheRating, tryGetRating } from './ratingsCache'
 
