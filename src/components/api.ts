@@ -1,3 +1,6 @@
+import * as cheerio from 'cheerio'
+import stringSimilarity from 'string-similarity'
+
 import {
   BeerResponse,
   RatingResponse,
@@ -5,8 +8,6 @@ import {
   VivinoMatch,
   VivinoReponseJSON
 } from '@/@types/types'
-import * as cheerio from 'cheerio'
-import stringSimilarity from 'string-similarity'
 
 export async function fetchRatingFromUntappd(
   productName: string
