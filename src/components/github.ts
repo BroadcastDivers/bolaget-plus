@@ -19,6 +19,10 @@ export async function getLatestRelease(): Promise<GitHubRelease | null> {
       return null
     }
     const release: GitHubRelease = (await response.json()) as GitHubRelease
+    // eslint-disable-next-line no-console
+    console.log('release', release)
+    // eslint-disable-next-line no-console
+    console.warn(`Latest release: ${release.tag_name} (${release.html_url})`)
     return release
   } catch {
     return null

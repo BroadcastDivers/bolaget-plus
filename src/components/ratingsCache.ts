@@ -1,5 +1,6 @@
+import { storage } from '#imports'
+
 import { RatingRequest, RatingResponse } from '@/@types/types'
-import { storage } from 'wxt/storage'
 
 const CACHE_EXPIRATION_DAYS = 1
 

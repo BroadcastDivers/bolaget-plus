@@ -2,23 +2,29 @@ import { defineConfig } from 'wxt'
 const isProduction = process.env.NODE_ENV === 'production'
 // See https://wxt.dev/api/config.html
 export default defineConfig({
-  modules: ['@wxt-dev/auto-icons', '@wxt-dev/i18n/module'],
-  runner: {
-    startUrls: [
-      'about:debugging#/runtime/this-firefox',
-      'https://www.systembolaget.se/produkt/vin/onbrina-796501/',
-      'chrome://extensions/'
-    ]
-  },
   dev: {
     server: {
       port: 3000
     }
   },
-  extensionApi: 'webextension-polyfill',
-  srcDir: 'src',
   manifest: {
+    browser_specific_settings: {
+      gecko: {
+        id: 'broadcastdivers@test.com'
+      },
+      gecko_android: {
+        strict_min_version: '120.0'
+      }
+    },
+    content_security_policy: {
+      extension_pages: `script-src 'self'; object-src 'self'; connect-src 'self' https://www.vivino.com https://untappd.com${isProduction ? '' : ' ws://localhost:3000/'};`
+    },
     default_locale: 'sv',
+    host_permissions: [
+      'https://www.systembolaget.se/*',
+      'https://www.vivino.com/*',
+      'https://untappd.com/*'
+    ],
     icons: {
       16: 'icons/16.png',
       32: 'icons/32.png',
@@ -32,23 +38,17 @@ export default defineConfig({
       'clipboardWrite',
       // Conditionally include permissions based on the build environment
       ...(isProduction ? [] : ['ws://localhost:3000/'])
-    ],
-
-    host_permissions: [
-      'https://www.systembolaget.se/*',
-      'https://www.vivino.com/*',
-      'https://untappd.com/*'
-    ],
-    content_security_policy: {
-      extension_pages: `script-src 'self'; object-src 'self'; connect-src 'self' https://www.vivino.com https://untappd.com${isProduction ? '' : ' ws://localhost:3000/'};`
-    },
-    browser_specific_settings: {
-      gecko: {
-        id: 'broadcastdivers@test.com'
-      },
-      gecko_android : {
-        strict_min_version: '120.0'
-      }
-    }
+    ]
+  },
+  modules: ['@wxt-dev/auto-icons', '@wxt-dev/i18n/module'],
+  srcDir: 'src',
+  webExt: {
+    openConsole: true,
+    openDevtools: true,
+    startUrls: [
+      'about:debugging#/runtime/this-firefox',
+      'https://www.systembolaget.se/produkt/vin/onbrina-796501/',
+      'chrome://extensions/'
+    ]
   }
 })

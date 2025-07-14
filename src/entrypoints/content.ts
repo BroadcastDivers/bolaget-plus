@@ -1,3 +1,5 @@
+import sentinel from 'sentinel-js'
+
 import {
   ProductType,
   type RatingResponse,
@@ -7,7 +9,6 @@ import * as domUtils from '@/components/domUtils'
 import * as productUtils from '@/components/productUtils'
 import { fetchRating } from '@/components/ratingService'
 import { wineFeatureEnabled } from '@/components/settings'
-import sentinel from 'sentinel-js'
 
 export default defineContentScript({
   main() {
@@ -30,10 +31,10 @@ async function featureEnabled(productType: ProductType): Promise<boolean> {
   return true
 }
 
-function handleRating(productType: ProductType, rating: RatingResponse) {
+async function handleRating(productType: ProductType, rating: RatingResponse) {
   switch (rating.status) {
     case RatingResultStatus.Found:
-      domUtils.setRating(productType, rating, rating.link)
+      await domUtils.setRating(productType, rating, rating.link)
       return
     case RatingResultStatus.Uncertain:
       domUtils.setUncertain(productType, rating.link)
@@ -72,7 +73,7 @@ async function tryInsertOnProdcutPage() {
     domUtils.showLoadingSpinner()
 
     const rating = await fetchRating(productName, productType)
-    handleRating(productType, rating)
+    await handleRating(productType, rating)
   } catch {
     domUtils.setMessage(i18n.t('noMatch'))
   } finally {

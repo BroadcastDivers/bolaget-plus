@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Tasted Products - Bolaget+</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: #333;
+      text-align: center;
+    }
+    .tasted-list {
+      margin-top: 20px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 15px;
+    }
+    .product-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .product-item:last-child {
+      border-bottom: none;
+    }
+    .remove-button {
+      background-color: #f44336;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .empty-message {
+      text-align: center;
+      color: #666;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Manage Your Tasted Products</h1>
+  
+  <div class="tasted-list" id="tasted-products-container">
+    <div class="empty-message">Loading your tasted products...</div>
+  </div>
+  
+  <script src="./import.ts" type="module"></script>
+</body>
+</html>

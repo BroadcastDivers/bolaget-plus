@@ -65,4 +65,14 @@ async function shareExtension(): Promise<void> {
 
 document.addEventListener('DOMContentLoaded', () => {
   void initialize()
+
+  const importButton = document.getElementById('import-button')
+
+  if (importButton) {
+    importButton.addEventListener('click', () => {
+      void browser.tabs.create({
+        url: browser.runtime.getURL('/tracking.html')
+      })
+    })
+  }
 })
