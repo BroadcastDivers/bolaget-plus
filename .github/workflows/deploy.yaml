@@ -1,7 +1,7 @@
 name: Deploy to Stores and Create Release
-description: |
-  This workflow is triggered on push to the main branch.
-  It checks if the version in package.json has changed, and if so, it submits the extension to the stores and creates a release.
+# description: |
+#   This workflow is triggered on push to the main branch.
+#   It checks if the version in package.json has changed, and if so, it submits the extension to the stores and creates a release.
 
 env:
   DIRECTORY: .output
@@ -55,8 +55,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: "20"
+          cache: "pnpm"
       - name: Install dependencies
         run: pnpm install
       - name: Build project
@@ -84,8 +84,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         with:
-          tag_name: 'v${{ needs.Version.outputs.version }}'
-          name: 'v${{ needs.Version.outputs.version }}'
+          tag_name: "v${{ needs.Version.outputs.version }}"
+          name: "v${{ needs.Version.outputs.version }}"
           draft: false
           prerelease: false
           files: |

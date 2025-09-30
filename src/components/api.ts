@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import * as cheerio from 'cheerio'
 import stringSimilarity from 'string-similarity'
 
@@ -79,6 +80,7 @@ export async function fetchRatingFromVivino(
   query: string
 ): Promise<RatingResponse> {
   const url = `https://www.vivino.com/search/wines?q=${encodeURIComponent(query)}`
+  console.log(`[Vivino API] Fetching: ${url}`)
 
   try {
     const response = await fetch(url, {
@@ -87,8 +89,10 @@ export async function fetchRatingFromVivino(
           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
       }
     })
+    console.log(`[Vivino API] Response status: ${response.status.toString()}`)
 
     if (!response.ok) {
+      console.error(`[Vivino API] Failed to fetch: ${response.statusText}`)
       throw new Error(`Failed to fetch: ${response.statusText}`)
     }
 
@@ -111,7 +115,8 @@ export async function fetchRatingFromVivino(
     }
 
     return { status: RatingResultStatus.NotFound } as RatingResponse
-  } catch {
+  } catch (error) {
+    console.error(`[Vivino API] Error:`, error)
     return { status: RatingResultStatus.NotFound } as RatingResponse
   }
 }

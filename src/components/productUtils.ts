@@ -45,7 +45,7 @@ export function isBottle(): boolean {
   const BOTTLE_STRING = 'flaska'
   let isBottle =
     Array.from(productContainer.querySelectorAll('p')).find((p) =>
-      p.textContent?.toLowerCase().includes(BOTTLE_STRING)
+      p.textContent.toLowerCase().includes(BOTTLE_STRING)
     ) !== undefined
 
   if (!isBottle) {
