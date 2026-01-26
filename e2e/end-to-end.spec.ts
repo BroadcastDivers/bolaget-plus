@@ -14,7 +14,7 @@ test('visiting wine page shows rating-container', async ({
   // act
   await page.goto('https://www.systembolaget.se/produkt/vin/amadio-203701/')
   await page.getByRole('link', { name: 'Jag har fyllt 20 år' }).click()
-  await page.getByRole('button', { name: 'Slå på och acceptera alla' }).click()
+  await page.getByRole('button', { name: 'Acceptera alla kakor' }).click()
   await page.reload()
   await page.waitForSelector('#rating-container')
 
@@ -35,7 +35,7 @@ test('visiting beer page shows rating-container with votes', async ({
   // act
   await page.goto('https://www.systembolaget.se/produkt/ol/pabst-155315/')
   await page.getByRole('link', { name: 'Jag har fyllt 20 år' }).click()
-  await page.getByRole('button', { name: 'Slå på och acceptera alla' }).click()
+  await page.getByRole('button', { name: 'Acceptera alla kakor' }).click()
   await page.reload()
   await page.locator('#rating-container').waitFor()
 
@@ -63,7 +63,7 @@ test('visiting a wine page with wine toggle disabled should not show wine', asyn
   // act
   await page.goto('https://www.systembolaget.se/produkt/vin/amadio-203701/')
   await page.getByRole('link', { name: 'Jag har fyllt 20 år' }).click()
-  await page.getByRole('button', { name: 'Slå på och acceptera alla' }).click()
+  await page.getByRole('button', { name: 'Acceptera alla kakor' }).click()
   await page.reload()
 
   // assert
@@ -83,7 +83,7 @@ test('visiting a wine page shows rating-container with ratings and stars', async
   // act
   await page.goto('https://www.systembolaget.se/produkt/vin/bread-butter-7667101/');
   await page.getByRole('link', { name: 'Jag har fyllt 20 år' }).click();
-  await page.getByRole('button', { name: 'Slå på och acceptera alla' }).click();
+  await page.getByRole('button', { name: 'Acceptera alla kakor' }).click();
   await page.reload();
 
   // Wait for the spinner to be removed
