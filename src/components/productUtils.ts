@@ -42,7 +42,7 @@ export function isBottle(): boolean {
   }
 
   const BOTTLE_STRING = 'flaska'
-  return Array.from(main.querySelectorAll('span, p, option')).some((el) =>
+  return Array.from(main.querySelectorAll('span, option')).some((el) =>
     el.textContent.toLowerCase().includes(BOTTLE_STRING)
   )
 }
