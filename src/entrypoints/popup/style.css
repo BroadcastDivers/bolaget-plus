@@ -15,7 +15,13 @@ html {
 .gradient-bg {
   position: absolute;
   inset: 0;
-  background: #18181a;
+  background:
+    radial-gradient(
+      120% 80% at 100% 0%,
+      rgba(9, 87, 65, 0.35) 0%,
+      transparent 55%
+    ),
+    #18181a;
 }
 .content {
   position: relative;
@@ -25,7 +31,6 @@ html {
   padding: 16px;
   background-color: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(4px);
-  /* T */
   box-sizing: border-box;
 }
 .top-bar {

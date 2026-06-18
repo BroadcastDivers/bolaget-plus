@@ -1,5 +1,7 @@
-// Should be set dynamically? Or should it be retrieved from manifest.json/package.json?
-export const version = '1.0.0'
+import browser from 'webextension-polyfill'
+
+// Sourced from the manifest, which WXT generates from package.json's version.
+export const version = browser.runtime.getManifest().version
 
 // TODO: Wip
 interface GitHubRelease {
