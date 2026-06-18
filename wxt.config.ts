@@ -15,7 +15,6 @@ export default defineConfig({
       port: 3000
     }
   },
-  extensionApi: 'webextension-polyfill',
   srcDir: 'src',
   manifest: {
     default_locale: 'sv',
