@@ -31,16 +31,17 @@ export interface VivinoMatch {
   vintage: {
     id: number
     name: string
-    region?: {
-      name: string
-    }
     statistics: {
       ratings_average: null | number
       ratings_count: null | number
+    }
+    wine: {
+      id: number
+      seo_name: string
     }
   }
 }
 
 export interface VivinoReponseJSON {
-  search_results?: { matches: VivinoMatch[] }
+  explore_vintage?: { matches: VivinoMatch[] }
 }
