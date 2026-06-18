@@ -9,7 +9,8 @@ async function checkForUpdate(
   installUpdateButton: HTMLButtonElement
 ): Promise<void> {
   const release = await getLatestRelease()
-  if (release && version !== release.tag_name) {
+  const latest = release?.tag_name.replace(/^v/, '')
+  if (release && latest !== version) {
     installUpdateButton.disabled = false
     installUpdateButton.addEventListener('click', () => {
       window.open(release.html_url, '_blank')
@@ -18,6 +19,7 @@ async function checkForUpdate(
 }
 
 async function initialize(): Promise<void> {
+  showVersion()
   await setupToggles()
 
   const shareButton = document.getElementById('shareButton')
@@ -60,6 +62,13 @@ async function shareExtension(): Promise<void> {
   } catch {
     //eslint-disable-next-line no-console
     console.error('Failed to copy extension URL to clipboard')
+  }
+}
+
+function showVersion(): void {
+  const versionLabel = document.querySelector('.version')
+  if (versionLabel) {
+    versionLabel.textContent = `v${version}`
   }
 }
 

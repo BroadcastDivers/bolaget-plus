@@ -35,14 +35,59 @@ export function getProductType(): ProductType {
   return ProductType.Uncertain
 }
 
+// Wine formats that are not a bottle and have no comparable Vivino rating.
+// We exclude these rather than allow-list bottle types, so bottle variants
+// (Flaska, Magnum, Halvflaska, …) all pass without enumerating them.
+const NON_BOTTLE_FORMATS = [
+  'box',
+  'bag-in-box',
+  'burk',
+  'pet',
+  'tetra',
+  'påse',
+  'pappförpackning',
+  'fat',
+  'pouch'
+]
+
 export function isBottle(): boolean {
   const main = document.querySelector('main')
   if (main == null) {
-    return false
+    return true
   }
 
-  const BOTTLE_STRING = 'flaska'
-  return Array.from(main.querySelectorAll('span, option')).some((el) =>
-    el.textContent.toLowerCase().includes(BOTTLE_STRING)
+  const descriptor = getPackagingDescriptor(main)
+  // If we can't read the format line, assume bottle rather than block the rating.
+  if (!descriptor) {
+    return true
+  }
+
+  return !NON_BOTTLE_FORMATS.some((format) => descriptor.includes(format))
+}
+
+// Reads the packaging type from the format line under the product title, which
+// reads "{packaging} · {volume} · {alcohol} % vol." — e.g. "Flaska", "Magnum",
+// "Bag-in-Box". Anchored on the alcohol content, which is always present.
+function getPackagingDescriptor(main: HTMLElement): null | string {
+  const volumeLeaf = Array.from(main.querySelectorAll('*')).find(
+    (el) => el.children.length === 0 && /%\s*vol\.?/i.test(el.textContent)
   )
+  if (!volumeLeaf) {
+    return null
+  }
+
+  let node: HTMLElement | null = volumeLeaf as HTMLElement
+  for (let i = 0; i < 4 && node; i++) {
+    const text = node.textContent
+    if (/[·•]/.test(text) && /\d/.test(text) && text.length < 80) {
+      break
+    }
+    node = node.parentElement
+  }
+  if (!node) {
+    return null
+  }
+
+  const firstSegment = node.textContent.split(/[·•]/)[0].trim().toLowerCase()
+  return firstSegment ? firstSegment : null
 }

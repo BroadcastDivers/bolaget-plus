@@ -40,7 +40,7 @@ test('visiting beer page shows rating-container with votes', async ({
   await page.locator('#rating-container').waitFor()
 
   // Wait for the spinner to be removed
-  await page.waitForSelector('.spinner', { state: 'detached' });
+  await page.waitForSelector('.bp-spinner', { state: 'detached' });
   await page.waitForSelector('#rating-container-body');
   // assert
   const res = await page.locator('#rating-container').textContent()
@@ -87,7 +87,7 @@ test('visiting a wine page shows rating-container with ratings and stars', async
   await page.reload();
 
   // Wait for the spinner to be removed
-  await page.waitForSelector('.spinner', { state: 'detached' });
+  await page.waitForSelector('.bp-spinner', { state: 'detached' });
 
   await page.waitForSelector('#rating-container-body');
 
@@ -95,7 +95,7 @@ test('visiting a wine page shows rating-container with ratings and stars', async
   const ratingContainer = page.locator('#rating-container-body');
   await expect(ratingContainer).toBeVisible();
 
-  const stars = ratingContainer.locator('svg');
+  const stars = ratingContainer.locator('.bp-rating-row svg');
   await expect(stars).toHaveCount(5);
 
   // Check for the presence of text indicating ratings (e.g., "votes" or "röster")
