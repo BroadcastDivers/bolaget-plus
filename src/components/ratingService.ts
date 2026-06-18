@@ -24,7 +24,9 @@ export async function fetchRating(
       RatingResponse
     >(ratingRequest)
 
-    await cacheRating(ratingRequest, response)
+    if (response.status !== RatingResultStatus.NotFound) {
+      await cacheRating(ratingRequest, response)
+    }
     return response
   } catch {
     return { status: RatingResultStatus.NotFound } as RatingResponse

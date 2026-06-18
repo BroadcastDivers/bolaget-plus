@@ -36,24 +36,13 @@ export function getProductType(): ProductType {
 }
 
 export function isBottle(): boolean {
-  const productContainer =
-    document.querySelector('main h1')?.parentElement?.parentElement
-  if (productContainer == null) {
+  const main = document.querySelector('main')
+  if (main == null) {
     return false
   }
 
   const BOTTLE_STRING = 'flaska'
-  let isBottle =
-    Array.from(productContainer.querySelectorAll('p')).find((p) =>
-      p.textContent?.toLowerCase().includes(BOTTLE_STRING)
-    ) !== undefined
-
-  if (!isBottle) {
-    isBottle =
-      Array.from(productContainer.querySelectorAll('option'))
-        .map((i) => i.innerText.toLowerCase())
-        .find((i) => i.includes(BOTTLE_STRING)) !== undefined
-  }
-
-  return isBottle
+  return Array.from(main.querySelectorAll('span, p, option')).some(
+    (el) => el.textContent?.toLowerCase().includes(BOTTLE_STRING)
+  )
 }

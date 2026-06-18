@@ -1,4 +1,4 @@
-import { storage } from 'wxt/storage'
+import { storage } from '@wxt-dev/storage'
 
 export const featuresEnabled = storage.defineItem<boolean>(
   'sync:featuresEnabled',

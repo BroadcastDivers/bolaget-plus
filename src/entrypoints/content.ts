@@ -14,6 +14,7 @@ export default defineContentScript({
   main() {
     //eslint-disable-next-line @typescript-eslint/no-misused-promises
     sentinel.on('h1', tryInsertOnProdcutPage)
+    void tryInsertOnProdcutPage()
   },
   matches: ['*://*.systembolaget.se/*']
 })
