@@ -43,6 +43,6 @@ export function isBottle(): boolean {
 
   const BOTTLE_STRING = 'flaska'
   return Array.from(main.querySelectorAll('span, p, option')).some(
-    (el) => el.textContent?.toLowerCase().includes(BOTTLE_STRING)
+    (el) => el.textContent !== null && el.textContent.toLowerCase().includes(BOTTLE_STRING)
   )
 }

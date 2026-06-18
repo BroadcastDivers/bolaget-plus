@@ -95,17 +95,17 @@ export async function fetchRatingFromVivino(
     const response = await fetch(url, {
       credentials: 'include',
       headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
+        Accept: 'application/json',
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
       }
     })
 
     if (!response.ok) {
-      console.error('[Vivino] API error:', response.status)
       return { status: RatingResultStatus.NotFound } as RatingResponse
     }
 
-    const data = await response.json() as VivinoReponseJSON
+    const data = (await response.json()) as VivinoReponseJSON
     const matches = data.explore_vintage?.matches ?? []
 
     if (matches.length === 0) {
@@ -120,7 +120,10 @@ export async function fetchRatingFromVivino(
         const rating = match.vintage.statistics.ratings_average ?? -1
         const votes = match.vintage.statistics.ratings_count ?? -1
         const link = `https://www.vivino.com/wines/${match.vintage.wine.id.toString()}`
-        const similarityRate = stringSimilarity.compareTwoStrings(query, wineName)
+        const similarityRate = stringSimilarity.compareTwoStrings(
+          query,
+          wineName
+        )
 
         const current: ScoredWine = {
           link,
@@ -142,7 +145,6 @@ export async function fetchRatingFromVivino(
       bestMatch.rating < 0 ||
       bestMatch.votes < 0
     ) {
-      console.error('[Vivino] Best match rejected:', bestMatch?.name, 'similarity:', bestMatch?.similarityRate)
       return {
         link: searchFallbackUrl,
         status: RatingResultStatus.Uncertain
@@ -150,8 +152,7 @@ export async function fetchRatingFromVivino(
     }
 
     return bestMatch
-  } catch (e) {
-    console.error('[Vivino] API error for query:', query, e)
+  } catch {
     return { status: RatingResultStatus.NotFound } as RatingResponse
   }
 }
