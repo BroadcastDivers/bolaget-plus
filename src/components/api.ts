@@ -102,14 +102,20 @@ export async function fetchRatingFromVivino(
     })
 
     if (!response.ok) {
-      return { status: RatingResultStatus.NotFound } as RatingResponse
+      return {
+        link: searchFallbackUrl,
+        status: RatingResultStatus.Uncertain
+      } as RatingResponse
     }
 
     const data = (await response.json()) as VivinoReponseJSON
     const matches = data.explore_vintage?.matches ?? []
 
     if (matches.length === 0) {
-      return { status: RatingResultStatus.NotFound } as RatingResponse
+      return {
+        link: searchFallbackUrl,
+        status: RatingResultStatus.Uncertain
+      } as RatingResponse
     }
 
     type ScoredWine = RatingResponse & { similarityRate: number }
@@ -153,6 +159,9 @@ export async function fetchRatingFromVivino(
 
     return bestMatch
   } catch {
-    return { status: RatingResultStatus.NotFound } as RatingResponse
+    return {
+      link: searchFallbackUrl,
+      status: RatingResultStatus.Uncertain
+    } as RatingResponse
   }
 }

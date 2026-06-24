@@ -15,11 +15,11 @@ export function getProductName(): null | string {
 
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   const secondLine = (headerChildren[1] as HTMLElement).innerText.trim() ?? ''
-  const secondLineWithoutComma = secondLine.includes(',')
-    ? secondLine.slice(0, secondLine.lastIndexOf(',')).trim()
-    : secondLine
+  // Replace ", " separator with a space so "Cabernet Sauvignon, 2025" → "Cabernet Sauvignon 2025".
+  // The vintage year is important for Vivino's per-vintage search index.
+  const secondLineNormalized = secondLine.replace(/,\s*/, ' ').trim()
 
-  return `${firstLine} ${secondLineWithoutComma}`.trim()
+  return `${firstLine} ${secondLineNormalized}`.trim()
 }
 
 export function getProductType(): ProductType {
