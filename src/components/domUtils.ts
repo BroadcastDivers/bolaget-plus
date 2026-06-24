@@ -1,6 +1,11 @@
 import { i18n } from '#i18n'
 
-import { BeerResponse, ProductType, RatingResponse } from '@/@types/types'
+import {
+  BeerResponse,
+  ProductType,
+  RatingResponse,
+  RatingResultStatus
+} from '@/@types/types'
 
 const RATING_CONTAINER_ID = 'rating-container'
 const RATING_CONTAINER_BODY_ID = 'rating-container-body'
@@ -102,6 +107,32 @@ const STYLES = `
   @keyframes bp-spin {
     to { transform: rotate(360deg); }
   }
+  .bp-card-rating {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+  }
+  .bp-card-rating svg { width: 14px; height: 14px; }
+  .bp-card-rating .bp-card-score {
+    font-weight: 700;
+    font-size: 12px;
+    color: #1a1a1a;
+  }
+  .bp-card-rating .bp-card-votes {
+    color: #888;
+    font-size: 11px;
+  }
+  .bp-card-spinner-inline {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin-top: 6px;
+    border: 2px solid #e8e8e8;
+    border-top-color: #095741;
+    border-radius: 50%;
+    animation: bp-spin 0.8s linear infinite;
+  }
 `
 
 export function getAndClearContainer(): HTMLElement {
@@ -139,12 +170,7 @@ export function injectRatingContainer() {
     )
   }
 
-  if (!document.getElementById(STYLE_ID)) {
-    const style = document.createElement('style')
-    style.id = STYLE_ID
-    style.textContent = STYLES
-    document.head.appendChild(style)
-  }
+  ensureStyles()
 }
 
 export function setMessage(message: string) {
@@ -252,6 +278,14 @@ function createSourceLink(
   return linkElement
 }
 
+function ensureStyles(): void {
+  if (document.getElementById(STYLE_ID)) return
+  const style = document.createElement('style')
+  style.id = STYLE_ID
+  style.textContent = STYLES
+  document.head.appendChild(style)
+}
+
 function generateCapSvg(rating: number): string {
   const maxCaps = 5
   const yellowCollor = '#ffc000'
@@ -285,6 +319,45 @@ function generateCapSvg(rating: number): string {
   }
 
   return `<div style="display: flex">${capsHtml}</div>`
+}
+
+const CARD_RATING_CLASS = 'bp-card-rating'
+
+export function injectCardSpinner(card: Element): HTMLElement | null {
+  if (card.querySelector(`.${CARD_RATING_CLASS}, .bp-card-spinner-inline`)) {
+    return null
+  }
+  ensureStyles()
+  const lastNameSpan = [...card.querySelectorAll('.monopol-250')].at(-1)
+  if (!lastNameSpan) return null
+
+  const spinner = document.createElement('div')
+  spinner.className = 'bp-card-spinner-inline'
+  lastNameSpan.insertAdjacentElement('afterend', spinner)
+  return spinner
+}
+
+export function replaceCardSpinner(
+  spinner: HTMLElement,
+  productType: ProductType,
+  rating: RatingResponse
+): void {
+  if (rating.status !== RatingResultStatus.Found) {
+    spinner.remove()
+    return
+  }
+  const svg =
+    productType === ProductType.Wine
+      ? generateStarsSvg(rating.rating)
+      : generateCapSvg(rating.rating)
+  const badge = document.createElement('div')
+  badge.className = CARD_RATING_CLASS
+  badge.innerHTML = `
+    ${svg}
+    <span class="bp-card-score">${rating.rating.toString()}</span>
+    <span class="bp-card-votes">(${rating.votes.toString()})</span>
+  `
+  spinner.replaceWith(badge)
 }
 
 function generateStarsSvg(rating: number): string {
