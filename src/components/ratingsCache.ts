@@ -51,5 +51,5 @@ function calculateDaysDifference(date1: Date, date2: Date): number {
 }
 
 function generateCacheKey(ratingRequest: RatingRequest): `local:${string}` {
-  return `local:ratings:${ratingRequest.productName}-${ratingRequest.query}`
+  return `local:ratings:${ratingRequest.productId}-${ratingRequest.query}`
 }

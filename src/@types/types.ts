@@ -16,6 +16,7 @@ export type BeerResponse = RatingResponse & {
 }
 
 export interface RatingRequest {
+  productId: string
   productName: string
   query: ProductType
 }
