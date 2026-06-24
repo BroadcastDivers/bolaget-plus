@@ -133,3 +133,21 @@ test('visiting a wine page shows rating-container with ratings and stars', async
   const vivinoLink = ratingContainer.locator('a[href*="vivino.com"]');
   await expect(vivinoLink).toBeVisible();
 });
+
+test('visiting wine list page shows rating badges on product cards', async ({
+  page,
+  extensionId
+}) => {
+  await page.goto(`chrome-extension://${extensionId}/popup.html`)
+  await page.waitForSelector('.settings')
+  await expect(page.locator('#enabled')).toBeChecked()
+  await expect(page.locator('#wine')).toBeChecked()
+
+  await page.goto('https://www.systembolaget.se/sortiment/vin/')
+  await page.getByRole('link', { name: 'Jag har fyllt 20 år' }).click()
+  await page.getByRole('button', { name: 'Acceptera alla kakor' }).click()
+  await page.reload()
+
+  await page.waitForSelector('.bp-card-rating', { timeout: 20000 })
+  await expect(page.locator('.bp-card-rating').first()).toBeVisible()
+})

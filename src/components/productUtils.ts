@@ -1,5 +1,34 @@
 import { ProductType } from '@/@types/types'
 
+export function getCardName(card: Element): null | string {
+  const spans = [...card.querySelectorAll('.monopol-250')] as HTMLElement[]
+  if (spans.length === 0) return null
+  const parts = spans.map((s) => s.innerText.trim()).filter(Boolean)
+  // Normalize ", 2025" → " 2025" so vintage year is included without comma
+  return (
+    parts
+      .join(' ')
+      .replace(/,\s*(\d{4})/, ' $1')
+      .trim() || null
+  )
+}
+
+export function getCardProductId(card: Element): null | string {
+  return extractProductId(card.getAttribute('href') ?? '')
+}
+
+export function getCardProductType(card: Element): ProductType {
+  const href = card.getAttribute('href') ?? ''
+  if (href.includes('/produkt/vin/')) return ProductType.Wine
+  if (href.includes('/produkt/ol/')) return ProductType.Beer
+  if (href.includes('/produkt/cider-blanddrycker/')) return ProductType.Cider
+  return ProductType.Uncertain
+}
+
+export function getProductId(): null | string {
+  return extractProductId(window.location.href)
+}
+
 export function getProductName(): null | string {
   const headerChildren = document.querySelector('main h1')?.children
 
@@ -67,6 +96,14 @@ export function isBottle(): boolean {
   }
 
   return !NON_BOTTLE_FORMATS.some((format) => descriptor.includes(format))
+}
+
+export function isListPage(): boolean {
+  return window.location.pathname.includes('/sortiment/')
+}
+
+function extractProductId(url: string): null | string {
+  return /-(\d+)\/?$/.exec(url)?.[1] ?? null
 }
 
 // Reads the packaging type from the format line under the product title, which

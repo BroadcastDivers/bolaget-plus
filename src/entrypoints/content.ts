@@ -7,7 +7,7 @@ import {
 } from '@/@types/types'
 import * as domUtils from '@/components/domUtils'
 import * as productUtils from '@/components/productUtils'
-import { fetchRating } from '@/components/ratingService'
+import { enqueueListFetch, fetchRating } from '@/components/ratingService'
 import {
   beerFeatureEnabled,
   ciderFeatureEnabled,
@@ -16,9 +16,23 @@ import {
 
 export default defineContentScript({
   main() {
+    const listCardObserver = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue
+          listCardObserver.unobserve(entry.target)
+          void handleListCard(entry.target)
+        }
+      },
+      { rootMargin: '200px' }
+    )
+
     //eslint-disable-next-line @typescript-eslint/no-misused-promises
     sentinel.on('h1', tryInsertOnProductPage)
     void tryInsertOnProductPage()
+    sentinel.on('a[id^="tile:"]', (card) => {
+      listCardObserver.observe(card)
+    })
   },
   matches: ['*://*.systembolaget.se/*']
 })
@@ -40,6 +54,27 @@ async function featureEnabled(productType: ProductType): Promise<boolean> {
     return false
   }
   return true
+}
+
+async function handleListCard(card: Element) {
+  if (!(await featuresEnabled.getValue())) return
+  const productType = productUtils.getCardProductType(card)
+  if (
+    productType === ProductType.Uncertain ||
+    !(await featureEnabled(productType))
+  ) {
+    return
+  }
+
+  const productId = productUtils.getCardProductId(card)
+  const name = productUtils.getCardName(card)
+  if (!productId || !name) return
+
+  const spinner = domUtils.injectCardSpinner(card)
+  if (!spinner) return
+
+  const rating = await enqueueListFetch(productId, name, productType)
+  domUtils.replaceCardSpinner(spinner, productType, rating)
 }
 
 function handleRating(productType: ProductType, rating: RatingResponse) {
@@ -73,8 +108,13 @@ async function tryInsertOnProductPage() {
     return
   }
 
+  const productId = productUtils.getProductId()
   const productName = productUtils.getProductName()
-  if (!productName || activeRequest?.productName === productName) {
+  if (
+    !productId ||
+    !productName ||
+    activeRequest?.productName === productName
+  ) {
     return
   }
 
@@ -83,7 +123,7 @@ async function tryInsertOnProductPage() {
   try {
     domUtils.showLoadingSpinner()
 
-    const rating = await fetchRating(productName, productType)
+    const rating = await fetchRating(productId, productName, productType)
     if (activeRequest !== request) return
     handleRating(productType, rating)
   } catch {
