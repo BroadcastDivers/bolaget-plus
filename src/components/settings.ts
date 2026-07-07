@@ -20,3 +20,10 @@ export const beerFeatureEnabled = storage.defineItem<boolean>(
     fallback: true
   }
 )
+
+export const ciderFeatureEnabled = storage.defineItem<boolean>(
+  'sync:ciderFeatureEnabled',
+  {
+    fallback: true
+  }
+)
