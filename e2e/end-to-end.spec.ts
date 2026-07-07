@@ -47,6 +47,33 @@ test('visiting beer page shows rating-container with votes', async ({
   expect(res).toMatch(/(votes|röster)/i)
 })
 
+test('visiting cider page shows rating-container with votes', async ({
+  page,
+  extensionId
+}) => {
+  // arrange
+  await page.goto(`chrome-extension://${extensionId}/popup.html`)
+  await page.waitForSelector('.settings')
+  await expect(page.locator('#enabled')).toBeChecked()
+  await expect(page.locator('#cider')).toBeChecked()
+
+  // act
+  await page.goto(
+    'https://www.systembolaget.se/produkt/cider-blanddrycker/somersby-182435/'
+  )
+  await page.getByRole('link', { name: 'Jag har fyllt 20 år' }).click()
+  await page.getByRole('button', { name: 'Acceptera alla kakor' }).click()
+  await page.reload()
+  await page.locator('#rating-container').waitFor()
+
+  // Wait for the spinner to be removed
+  await page.waitForSelector('.bp-spinner', { state: 'detached' });
+  await page.waitForSelector('#rating-container-body');
+  // assert
+  const res = await page.locator('#rating-container').textContent()
+  expect(res).toMatch(/(votes|röster)/i)
+})
+
 test('visiting a wine page with wine toggle disabled should not show wine', async ({
   page,
   extensionId
