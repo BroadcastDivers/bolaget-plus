@@ -11,6 +11,7 @@ A browser plugin for Systembolaget.se that shows ratings directly at systembolag
 - Seamless integration with Systembolaget's website
 - Wine ratings from [Vivino](https://www.vivino.com/) with direct links to product pages
 - Beer ratings from [Untappd](https://untappd.com/) with direct links to product pages
+- Cider & mixed drink ratings from [Untappd](https://untappd.com/) with direct links to product pages
 - Easy toggling of features through a simple popup interface
 - Works with both Firefox and Chrome browsers
 
@@ -28,6 +29,7 @@ Or download the latest zip from the [Github Releases](https://github.com/Broadca
 4. Use the extension popup to:
    - Disable wine ratings.
    - Disable beer ratings.
+   - Disable cider & mixed drink ratings.
    - Disable the extension entirely.
 
 ## Development

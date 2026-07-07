@@ -1,5 +1,6 @@
 export enum ProductType {
   Beer = 'beer',
+  Cider = 'cider',
   Uncertain = 'uncertain',
   Wine = 'wine'
 }

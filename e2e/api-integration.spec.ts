@@ -22,6 +22,16 @@ test.describe('API Integration Tests', () => {
     expect(result?.votes).toBeGreaterThan(0);
     expect(result?.link).toContain('untappd.com');
   });
+
+  test('fetchRatingFromUntappd returns data for a cider query', async () => {
+    const result = await fetchRatingFromUntappd('Rekorderlig Päron');
+
+    expect(result).not.toBeNull();
+    expect(result?.status).toBe(RatingResultStatus.Found);
+    expect(result?.rating).toBeGreaterThan(0);
+    expect(result?.votes).toBeGreaterThan(0);
+    expect(result?.link).toContain('untappd.com');
+  });
 });
 
 // Offline tests: the Vivino explore API only indexes marketplace wines, so a

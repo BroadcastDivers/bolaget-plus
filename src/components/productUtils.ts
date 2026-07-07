@@ -32,6 +32,10 @@ export function getProductType(): ProductType {
     return ProductType.Beer
   }
 
+  if (url.includes('/produkt/cider-blanddrycker/')) {
+    return ProductType.Cider
+  }
+
   return ProductType.Uncertain
 }
 
