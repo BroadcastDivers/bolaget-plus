@@ -12,7 +12,7 @@ interface GitHubRelease {
 // TODO: WIP - needs cache
 export async function getLatestRelease(): Promise<GitHubRelease | null> {
   const repoOwner = 'BroadcastDivers'
-  const repoName = 'systembolaget-ratings'
+  const repoName = 'bolaget-plus'
   const url = `https://api.github.com/repos/${repoOwner}/${repoName}/releases/latest`
 
   try {

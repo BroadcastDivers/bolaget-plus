@@ -31,8 +31,10 @@ async function initialize(): Promise<void> {
 
   const installUpdateButton = document.getElementById(
     'updateButton'
-  ) as HTMLButtonElement
-  await checkForUpdate(installUpdateButton)
+  ) as HTMLButtonElement | null
+  if (installUpdateButton) {
+    await checkForUpdate(installUpdateButton)
+  }
 }
 
 async function setupToggles(): Promise<void> {

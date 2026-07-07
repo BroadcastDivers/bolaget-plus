@@ -13,13 +13,16 @@ import { wineFeatureEnabled } from '@/components/settings'
 export default defineContentScript({
   main() {
     //eslint-disable-next-line @typescript-eslint/no-misused-promises
-    sentinel.on('h1', tryInsertOnProdcutPage)
-    void tryInsertOnProdcutPage()
+    sentinel.on('h1', tryInsertOnProductPage)
+    void tryInsertOnProductPage()
   },
   matches: ['*://*.systembolaget.se/*']
 })
 
-let fetchingRatingInProgress = false
+// The product whose rating is currently being fetched. Used to dedupe
+// repeated sentinel callbacks for the same page and to discard responses
+// that resolve after the user has navigated to another product.
+let activeRequest: null | { productName: string } = null
 
 async function featureEnabled(productType: ProductType): Promise<boolean> {
   if (
@@ -46,12 +49,11 @@ function handleRating(productType: ProductType, rating: RatingResponse) {
   }
 }
 
-async function tryInsertOnProdcutPage() {
+async function tryInsertOnProductPage() {
   if (!(await featuresEnabled.getValue())) return
 
   const productType = productUtils.getProductType()
   if (
-    fetchingRatingInProgress ||
     productType === ProductType.Uncertain ||
     !(await featureEnabled(productType))
   ) {
@@ -65,19 +67,25 @@ async function tryInsertOnProdcutPage() {
   }
 
   const productName = productUtils.getProductName()
-  if (!productName) {
+  if (!productName || activeRequest?.productName === productName) {
     return
   }
 
+  const request = { productName }
+  activeRequest = request
   try {
-    fetchingRatingInProgress = true
     domUtils.showLoadingSpinner()
 
     const rating = await fetchRating(productName, productType)
+    if (activeRequest !== request) return
     handleRating(productType, rating)
   } catch {
-    domUtils.setMessage(i18n.t('noMatch'))
+    if (activeRequest === request) {
+      domUtils.setMessage(i18n.t('noMatch'))
+    }
   } finally {
-    fetchingRatingInProgress = false
+    if (activeRequest === request) {
+      activeRequest = null
+    }
   }
 }
