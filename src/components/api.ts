@@ -6,7 +6,7 @@ import {
   RatingResponse,
   RatingResultStatus,
   VivinoMatch,
-  VivinoReponseJSON
+  VivinoResponseJSON
 } from '@/@types/types'
 
 export async function fetchRatingFromUntappd(
@@ -48,7 +48,7 @@ export async function fetchRatingFromUntappd(
 
     const brewery = beerCard.find('.brewery').first().text().trim()
     const href = beerCard.find('a').first().attr('href') ?? ''
-    const link = `https://untappd.com/${href}`
+    const link = new URL(href, 'https://untappd.com').toString()
 
     const rating = beerCard.find('.num').first().text().trim()
 
@@ -105,7 +105,7 @@ export async function fetchRatingFromVivino(
       return { status: RatingResultStatus.NotFound } as RatingResponse
     }
 
-    const data = (await response.json()) as VivinoReponseJSON
+    const data = (await response.json()) as VivinoResponseJSON
     const matches = data.explore_vintage?.matches ?? []
 
     if (matches.length === 0) {

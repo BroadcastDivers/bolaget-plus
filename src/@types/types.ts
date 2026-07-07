@@ -42,6 +42,6 @@ export interface VivinoMatch {
   }
 }
 
-export interface VivinoReponseJSON {
+export interface VivinoResponseJSON {
   explore_vintage?: { matches: VivinoMatch[] }
 }

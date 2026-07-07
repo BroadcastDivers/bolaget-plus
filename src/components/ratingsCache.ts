@@ -23,8 +23,10 @@ export async function tryGetRating(
   ratingRequest: RatingRequest
 ): Promise<null | RatingResponse> {
   const key = generateCacheKey(ratingRequest)
-  const cachedRating = await storage.getItem<RatingResponse>(key)
-  const metadata = await storage.getMeta<{ datetime: string }>(key)
+  const [cachedRating, metadata] = await Promise.all([
+    storage.getItem<RatingResponse>(key),
+    storage.getMeta<{ datetime: string }>(key)
+  ])
   if (!cachedRating || !metadata.datetime) {
     return null
   }

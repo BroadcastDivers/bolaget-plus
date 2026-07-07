@@ -187,7 +187,7 @@ export function setRating(
 
   const linkLabel =
     productType === ProductType.Beer
-      ? i18n.t('linkToUntapped')
+      ? i18n.t('linkToUntappd')
       : i18n.t('linkToVivino')
 
   const footer = document.createElement('div')
@@ -208,7 +208,7 @@ export function setUncertain(productType: ProductType, link: null | string) {
 
   const linkLabel =
     productType === ProductType.Beer
-      ? i18n.t('searchAtUntapped')
+      ? i18n.t('searchAtUntappd')
       : i18n.t('searchAtVivino')
 
   const footer = document.createElement('div')
@@ -254,7 +254,7 @@ function createSourceLink(
 
 function generateCapSvg(rating: number): string {
   const maxCaps = 5
-  const yellowCollor = '#ffc000'
+  const yellowColor = '#ffc000'
   const grayColor = '#d8d8d8'
   const heightAndWidth = '28px'
   const capSvg = (fill: string) => `
@@ -266,14 +266,14 @@ function generateCapSvg(rating: number): string {
   let capsHtml = ''
   for (let i = 0; i < maxCaps; i++) {
     if (rating >= i + 1) {
-      capsHtml += capSvg(yellowCollor)
+      capsHtml += capSvg(yellowColor)
     } else if (rating >= i + 0.5) {
       const gradientId = `bp-half-cap-${i.toString()}`
       capsHtml += `
       <svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="${heightAndWidth}" height="${heightAndWidth}" viewBox="0 0 50 50" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd" xmlns:xlink="http://www.w3.org/1999/xlink">
         <defs>
           <linearGradient id="${gradientId}">
-            <stop offset="50%" stop-color="${yellowCollor}" />
+            <stop offset="50%" stop-color="${yellowColor}" />
             <stop offset="50%" stop-color="${grayColor}" />
           </linearGradient>
         </defs>
