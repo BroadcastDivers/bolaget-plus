@@ -23,6 +23,7 @@ browser.runtime.onMessage.addListener(async (message: unknown) => {
   const { productName, query } = message
   switch (query) {
     case ProductType.Beer:
+    case ProductType.Cider:
       return await fetchRatingFromUntappd(productName)
     case ProductType.Wine:
       return await fetchRatingFromVivino(productName)

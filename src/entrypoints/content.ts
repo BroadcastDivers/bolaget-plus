@@ -8,7 +8,11 @@ import {
 import * as domUtils from '@/components/domUtils'
 import * as productUtils from '@/components/productUtils'
 import { fetchRating } from '@/components/ratingService'
-import { wineFeatureEnabled } from '@/components/settings'
+import {
+  beerFeatureEnabled,
+  ciderFeatureEnabled,
+  wineFeatureEnabled
+} from '@/components/settings'
 
 export default defineContentScript({
   main() {
@@ -25,7 +29,10 @@ async function featureEnabled(productType: ProductType): Promise<boolean> {
   if (
     (productType === ProductType.Wine &&
       !(await wineFeatureEnabled.getValue())) ||
-    (productType === ProductType.Beer && !(await beerFeatureEnabled.getValue()))
+    (productType === ProductType.Beer &&
+      !(await beerFeatureEnabled.getValue())) ||
+    (productType === ProductType.Cider &&
+      !(await ciderFeatureEnabled.getValue()))
   ) {
     return false
   }

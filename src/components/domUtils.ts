@@ -178,7 +178,7 @@ export function setRating(
   const meta = document.createElement('div')
   meta.className = 'bp-meta'
   meta.innerText = `${rating.votes.toString()} ${i18n.t('votes')}`
-  if (productType === ProductType.Beer) {
+  if (productType !== ProductType.Wine) {
     const beerRating = rating as BeerResponse
     if (beerRating.brewery) {
       meta.innerText += ` · ${beerRating.brewery}`
@@ -186,9 +186,9 @@ export function setRating(
   }
 
   const linkLabel =
-    productType === ProductType.Beer
-      ? i18n.t('linkToUntapped')
-      : i18n.t('linkToVivino')
+    productType === ProductType.Wine
+      ? i18n.t('linkToVivino')
+      : i18n.t('linkToUntapped')
 
   const footer = document.createElement('div')
   footer.className = 'bp-footer'
@@ -207,9 +207,9 @@ export function setUncertain(productType: ProductType, link: null | string) {
   message.innerText = i18n.t('uncertainMatch')
 
   const linkLabel =
-    productType === ProductType.Beer
-      ? i18n.t('searchAtUntapped')
-      : i18n.t('searchAtVivino')
+    productType === ProductType.Wine
+      ? i18n.t('searchAtVivino')
+      : i18n.t('searchAtUntapped')
 
   const footer = document.createElement('div')
   footer.className = 'bp-footer'

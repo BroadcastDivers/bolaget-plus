@@ -15,7 +15,17 @@ test.describe('API Integration Tests', () => {
 
   test('fetchRatingFromUntappd returns data for valid query', async () => {
     const result = await fetchRatingFromUntappd('Pabst Blue Ribbon');
-    
+
+    expect(result).not.toBeNull();
+    expect(result?.status).toBe(RatingResultStatus.Found);
+    expect(result?.rating).toBeGreaterThan(0);
+    expect(result?.votes).toBeGreaterThan(0);
+    expect(result?.link).toContain('untappd.com');
+  });
+
+  test('fetchRatingFromUntappd returns data for a cider query', async () => {
+    const result = await fetchRatingFromUntappd('Rekorderlig Päron');
+
     expect(result).not.toBeNull();
     expect(result?.status).toBe(RatingResultStatus.Found);
     expect(result?.rating).toBeGreaterThan(0);

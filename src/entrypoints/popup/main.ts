@@ -1,6 +1,7 @@
 import { getLatestRelease, version } from '@/components/github'
 import {
   beerFeatureEnabled,
+  ciderFeatureEnabled,
   featuresEnabled,
   wineFeatureEnabled
 } from '@/components/settings'
@@ -52,6 +53,12 @@ async function setupToggles(): Promise<void> {
   beerToggle.checked = await beerFeatureEnabled.getValue()
   beerToggle.addEventListener('change', () => {
     void beerFeatureEnabled.setValue(beerToggle.checked)
+  })
+
+  const ciderToggle = document.getElementById('cider') as HTMLInputElement
+  ciderToggle.checked = await ciderFeatureEnabled.getValue()
+  ciderToggle.addEventListener('change', () => {
+    void ciderFeatureEnabled.setValue(ciderToggle.checked)
   })
 }
 
