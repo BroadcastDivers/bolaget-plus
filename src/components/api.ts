@@ -1,76 +1,86 @@
-import * as cheerio from 'cheerio'
 import stringSimilarity from 'string-similarity'
 
 import {
   BeerResponse,
   RatingResponse,
   RatingResultStatus,
+  UntappdHit,
+  UntappdSearchJSON,
   VivinoMatch,
   VivinoResponseJSON
 } from '@/@types/types'
 
+// Untappd's search page renders results client-side via Algolia; these are the
+// public search-only credentials it ships to anonymous visitors.
+const UNTAPPD_ALGOLIA_APP_ID = '9WBO4RQ3HO'
+const UNTAPPD_ALGOLIA_SEARCH_KEY = '1d347324d67ec472bb7132c66aead485'
+
 export async function fetchRatingFromUntappd(
   productName: string
 ): Promise<RatingResponse> {
-  const url = `https://untappd.com/search?q=${encodeURIComponent(
+  const url = `https://${UNTAPPD_ALGOLIA_APP_ID.toLowerCase()}-dsn.algolia.net/1/indexes/beer/query`
+  const searchFallbackUrl = `https://untappd.com/search?q=${encodeURIComponent(
     productName
   )}&type=beer&sort=all`
-  const headers = {
-    'User-Agent':
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
-  }
 
   try {
     const response = await fetch(url, {
-      headers
+      body: JSON.stringify({
+        params: new URLSearchParams({
+          hitsPerPage: '5',
+          query: productName
+        }).toString()
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Algolia-API-Key': UNTAPPD_ALGOLIA_SEARCH_KEY,
+        'X-Algolia-Application-Id': UNTAPPD_ALGOLIA_APP_ID
+      },
+      method: 'POST'
     })
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch: ${response.statusText}`)
-    }
-
-    const html = await response.text()
-    if (html.includes("We didn't find any beers matching")) {
       return { status: RatingResultStatus.NotFound } as RatingResponse
     }
 
-    const $ = cheerio.load(html)
-    const beerCard = $('.beer-item').first()
+    const data = (await response.json()) as UntappdSearchJSON
+    const hits = data.hits ?? []
 
-    const name = beerCard.find('.name').first().text().trim()
-    const similarityRate = stringSimilarity.compareTwoStrings(productName, name)
-    if (similarityRate < 0.2) {
+    if (hits.length === 0) {
+      return { status: RatingResultStatus.NotFound } as RatingResponse
+    }
+
+    type ScoredBeer = BeerResponse & { similarityRate: number }
+
+    const bestMatch = hits.reduce<null | ScoredBeer>((best, hit: UntappdHit) => {
+      const similarityRate = Math.max(
+        stringSimilarity.compareTwoStrings(productName, hit.beer_name),
+        stringSimilarity.compareTwoStrings(productName, hit.brewery_beer_name)
+      )
+
+      const current: ScoredBeer = {
+        brewery: hit.brewery_name,
+        link: `https://untappd.com/b/${hit.beer_slug}/${hit.bid.toString()}`,
+        name: hit.beer_name,
+        // Untappd reports no score (null or 0) for beers with too few
+        // check-ins; normalize to 0 so the UI can render it as "N/A".
+        rating: hit.rating_score ?? 0,
+        similarityRate,
+        status: RatingResultStatus.Found,
+        votes: hit.rating_count ?? 0
+      }
+
+      return similarityRate > (best?.similarityRate ?? 0) ? current : best
+    }, null)
+
+    if (!bestMatch || bestMatch.similarityRate < 0.2) {
       return {
-        link: url,
+        link: searchFallbackUrl,
         status: RatingResultStatus.Uncertain
       } as RatingResponse
     }
 
-    const brewery = beerCard.find('.brewery').first().text().trim()
-    const href = beerCard.find('a').first().attr('href') ?? ''
-    const link = new URL(href, 'https://untappd.com').toString()
-
-    const rating = beerCard.find('.num').first().text().trim()
-
-    const ratingNum = parseFloat(rating.replace('(', '').replace(')', ''))
-
-    const responseDetailPage = await fetch(link, {
-      headers
-    })
-
-    const detailHtml = await responseDetailPage.text()
-    const detailCard = cheerio.load(detailHtml)('.details').first()
-    const lastParagraph = detailCard.find('p').last()
-    const votes = parseInt(lastParagraph.text().replace(/[^0-9]/g, ''), 10)
-
-    return {
-      brewery: brewery,
-      link: link,
-      name: name,
-      rating: ratingNum,
-      status: RatingResultStatus.Found,
-      votes: votes
-    } as BeerResponse
+    return bestMatch
   } catch {
     return { status: RatingResultStatus.NotFound } as RatingResponse
   }
@@ -117,8 +127,8 @@ export async function fetchRatingFromVivino(
     const bestMatch = matches.reduce<null | ScoredWine>(
       (best, match: VivinoMatch) => {
         const wineName = match.vintage.name
-        const rating = match.vintage.statistics.ratings_average ?? -1
-        const votes = match.vintage.statistics.ratings_count ?? -1
+        const rating = match.vintage.statistics.ratings_average ?? 0
+        const votes = match.vintage.statistics.ratings_count ?? 0
         const link = `https://www.vivino.com/wines/${match.vintage.wine.id.toString()}`
         const similarityRate = stringSimilarity.compareTwoStrings(
           query,
@@ -139,12 +149,7 @@ export async function fetchRatingFromVivino(
       null
     )
 
-    if (
-      !bestMatch ||
-      bestMatch.similarityRate < 0.5 ||
-      bestMatch.rating < 0 ||
-      bestMatch.votes < 0
-    ) {
+    if (!bestMatch || bestMatch.similarityRate < 0.5) {
       return {
         link: searchFallbackUrl,
         status: RatingResultStatus.Uncertain

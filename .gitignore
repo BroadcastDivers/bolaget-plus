@@ -70,3 +70,7 @@ web-ext.config.ts
 # playwright
 playwright-report/
 test-results/.last-run.json
+
+# Local tool artifacts
+.playwright-mcp/
+.spec-workflow/
