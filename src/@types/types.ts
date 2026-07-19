@@ -27,6 +27,20 @@ export interface RatingResponse {
   votes: number
 }
 
+export interface UntappdHit {
+  beer_name: string
+  beer_slug: string
+  bid: number
+  brewery_beer_name: string
+  brewery_name: null | string
+  rating_count: null | number
+  rating_score: null | number
+}
+
+export interface UntappdSearchJSON {
+  hits?: UntappdHit[]
+}
+
 export interface VivinoMatch {
   vintage: {
     id: number

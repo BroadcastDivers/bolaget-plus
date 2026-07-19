@@ -42,7 +42,6 @@
   "dependencies": {
     "@wxt-dev/i18n": "^0.2.5",
     "@wxt-dev/storage": "^1.2.8",
-    "cheerio": "^1.2.0",
     "sentinel-js": "^0.0.7",
     "string-similarity": "^4.0.4"
   },

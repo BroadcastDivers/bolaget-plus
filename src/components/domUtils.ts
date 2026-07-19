@@ -167,12 +167,18 @@ export function setRating(
       ? generateStarsSvg(rating.rating)
       : generateCapSvg(rating.rating)
 
+  // A score of 0 means the source has too few ratings to compute one yet.
+  const scoreHtml =
+    rating.rating > 0
+      ? `<span class="bp-score">${rating.rating.toString()}</span>
+        <span class="bp-scale">/ 5</span>`
+      : `<span class="bp-score" title="${i18n.t('noRatingYet')}">N/A</span>`
+
   const ratingRow = document.createElement('div')
   ratingRow.className = 'bp-rating-row'
   ratingRow.innerHTML = `
         ${svg}
-        <span class="bp-score">${rating.rating.toString()}</span>
-        <span class="bp-scale">/ 5</span>
+        ${scoreHtml}
       `
 
   const meta = document.createElement('div')
