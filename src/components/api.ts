@@ -102,7 +102,13 @@ export async function fetchRatingFromVivino(
     search_term: query
   })
   const url = `https://www.vivino.com/api/explore/explore?${params.toString()}`
-  const searchFallbackUrl = `https://www.vivino.com/search/wines?q=${encodeURIComponent(query)}`
+  // Vivino's explore API only indexes marketplace wines, so misses are common
+  // (catalogue-only wines, regional gaps). Instead of a dead-end "no rating"
+  // message, always hand the user a working Vivino search link.
+  const uncertainFallback = {
+    link: `https://www.vivino.com/search/wines?q=${encodeURIComponent(query)}`,
+    status: RatingResultStatus.Uncertain
+  } as RatingResponse
 
   try {
     const response = await fetch(url, {
@@ -115,14 +121,14 @@ export async function fetchRatingFromVivino(
     })
 
     if (!response.ok) {
-      return { status: RatingResultStatus.NotFound } as RatingResponse
+      return uncertainFallback
     }
 
     const data = (await response.json()) as VivinoResponseJSON
     const matches = data.explore_vintage?.matches ?? []
 
     if (matches.length === 0) {
-      return { status: RatingResultStatus.NotFound } as RatingResponse
+      return uncertainFallback
     }
 
     type ScoredWine = RatingResponse & { similarityRate: number }
@@ -153,14 +159,11 @@ export async function fetchRatingFromVivino(
     )
 
     if (!bestMatch || bestMatch.similarityRate < 0.5) {
-      return {
-        link: searchFallbackUrl,
-        status: RatingResultStatus.Uncertain
-      } as RatingResponse
+      return uncertainFallback
     }
 
     return bestMatch
   } catch {
-    return { status: RatingResultStatus.NotFound } as RatingResponse
+    return uncertainFallback
   }
 }
