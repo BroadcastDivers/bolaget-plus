@@ -52,26 +52,29 @@ export async function fetchRatingFromUntappd(
 
     type ScoredBeer = BeerResponse & { similarityRate: number }
 
-    const bestMatch = hits.reduce<null | ScoredBeer>((best, hit: UntappdHit) => {
-      const similarityRate = Math.max(
-        stringSimilarity.compareTwoStrings(productName, hit.beer_name),
-        stringSimilarity.compareTwoStrings(productName, hit.brewery_beer_name)
-      )
+    const bestMatch = hits.reduce<null | ScoredBeer>(
+      (best, hit: UntappdHit) => {
+        const similarityRate = Math.max(
+          stringSimilarity.compareTwoStrings(productName, hit.beer_name),
+          stringSimilarity.compareTwoStrings(productName, hit.brewery_beer_name)
+        )
 
-      const current: ScoredBeer = {
-        brewery: hit.brewery_name,
-        link: `https://untappd.com/b/${hit.beer_slug}/${hit.bid.toString()}`,
-        name: hit.beer_name,
-        // Untappd reports no score (null or 0) for beers with too few
-        // check-ins; normalize to 0 so the UI can render it as "N/A".
-        rating: hit.rating_score ?? 0,
-        similarityRate,
-        status: RatingResultStatus.Found,
-        votes: hit.rating_count ?? 0
-      }
+        const current: ScoredBeer = {
+          brewery: hit.brewery_name,
+          link: `https://untappd.com/b/${hit.beer_slug}/${hit.bid.toString()}`,
+          name: hit.beer_name,
+          // Untappd reports no score (null or 0) for beers with too few
+          // check-ins; normalize to 0 so the UI can render it as "N/A".
+          rating: hit.rating_score ?? 0,
+          similarityRate,
+          status: RatingResultStatus.Found,
+          votes: hit.rating_count ?? 0
+        }
 
-      return similarityRate > (best?.similarityRate ?? 0) ? current : best
-    }, null)
+        return similarityRate > (best?.similarityRate ?? 0) ? current : best
+      },
+      null
+    )
 
     if (!bestMatch || bestMatch.similarityRate < 0.2) {
       return {
