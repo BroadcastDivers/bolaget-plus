@@ -142,6 +142,25 @@ const STYLES = `
     object-fit: contain;
     flex-shrink: 0;
   }
+  @media (hover: hover) and (pointer: fine) {
+    #${RATING_CONTAINER_ID} .bp-thumb,
+    #${RATING_CONTAINER_ID} .bp-alt-thumb {
+      cursor: zoom-in;
+    }
+  }
+  .bp-zoom-preview {
+    position: fixed;
+    display: none;
+    max-width: 220px;
+    max-height: 260px;
+    padding: 6px;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+    object-fit: contain;
+    pointer-events: none;
+    z-index: 2147483647;
+  }
   #${RATING_CONTAINER_ID} .bp-spinner-wrap {
     display: flex;
     justify-content: center;
@@ -392,7 +411,29 @@ function createThumbnail(dataUrl: string, className: string): HTMLImageElement {
   img.className = className
   img.src = dataUrl
   img.alt = ''
+  attachZoomOnHover(img, dataUrl)
   return img
+}
+
+let zoomPreview: HTMLImageElement | null = null
+
+// Desktop-only: hovering a small label thumbnail floats an enlarged copy next
+// to it. The card itself is `overflow: hidden`, so the preview lives on <body>.
+function attachZoomOnHover(img: HTMLImageElement, dataUrl: string): void {
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    return
+  }
+  img.addEventListener('mouseenter', () => {
+    const preview = getZoomPreview()
+    preview.src = dataUrl
+    positionZoomPreview(preview, img)
+    preview.style.display = 'block'
+  })
+  img.addEventListener('mouseleave', () => {
+    if (zoomPreview) {
+      zoomPreview.style.display = 'none'
+    }
+  })
 }
 
 function ensureStyles(): void {
@@ -436,6 +477,38 @@ function generateCapSvg(rating: number): string {
   }
 
   return `<div style="display: flex">${capsHtml}</div>`
+}
+
+function getZoomPreview(): HTMLImageElement {
+  if (!zoomPreview) {
+    zoomPreview = document.createElement('img')
+    zoomPreview.className = 'bp-zoom-preview'
+    zoomPreview.alt = ''
+    document.body.appendChild(zoomPreview)
+  }
+  return zoomPreview
+}
+
+function positionZoomPreview(
+  preview: HTMLImageElement,
+  anchor: HTMLElement
+): void {
+  const margin = 8
+  const gap = 12
+  const size = 232 // preview max box (max-height 260 minus padding) for clamping
+  const rect = anchor.getBoundingClientRect()
+
+  let top = rect.top + rect.height / 2 - size / 2
+  top = Math.max(margin, Math.min(top, window.innerHeight - size - margin))
+
+  // Prefer the right of the thumbnail; flip left when it would overflow.
+  let left = rect.right + gap
+  if (left + size > window.innerWidth - margin) {
+    left = rect.left - gap - size
+  }
+
+  preview.style.top = `${top.toString()}px`
+  preview.style.left = `${left.toString()}px`
 }
 
 const CARD_RATING_CLASS = 'bp-card-rating'
