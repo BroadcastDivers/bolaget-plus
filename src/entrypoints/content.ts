@@ -83,7 +83,7 @@ function handleRating(productType: ProductType, rating: RatingResponse) {
       domUtils.setRating(productType, rating, rating.link)
       return
     case RatingResultStatus.Uncertain:
-      domUtils.setUncertain(productType, rating.link)
+      domUtils.setUncertain(productType, rating)
       return
     default:
       domUtils.setMessage(i18n.t('noMatch'))
