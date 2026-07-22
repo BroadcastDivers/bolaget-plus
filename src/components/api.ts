@@ -2,6 +2,7 @@ import stringSimilarity from 'string-similarity'
 
 import {
   BeerResponse,
+  RatingAlternative,
   RatingResponse,
   RatingResultStatus,
   UntappdHit,
@@ -14,6 +15,10 @@ import {
 // public search-only credentials it ships to anonymous visitors.
 const UNTAPPD_ALGOLIA_APP_ID = '9WBO4RQ3HO'
 const UNTAPPD_ALGOLIA_SEARCH_KEY = '1d347324d67ec472bb7132c66aead485'
+
+// How many ranked candidates to surface as "did you mean" alternatives when
+// no match is confident enough to auto-select.
+const MAX_ALTERNATIVES = 3
 
 export async function fetchRatingFromUntappd(
   productName: string
@@ -52,14 +57,14 @@ export async function fetchRatingFromUntappd(
 
     type ScoredBeer = BeerResponse & { similarityRate: number }
 
-    const bestMatch = hits.reduce<null | ScoredBeer>(
-      (best, hit: UntappdHit) => {
+    const scored = hits
+      .map((hit: UntappdHit): ScoredBeer => {
         const similarityRate = Math.max(
           stringSimilarity.compareTwoStrings(productName, hit.beer_name),
           stringSimilarity.compareTwoStrings(productName, hit.brewery_beer_name)
         )
 
-        const current: ScoredBeer = {
+        return {
           brewery: hit.brewery_name,
           link: `https://untappd.com/b/${hit.beer_slug}/${hit.bid.toString()}`,
           name: hit.beer_name,
@@ -70,14 +75,14 @@ export async function fetchRatingFromUntappd(
           status: RatingResultStatus.Found,
           votes: hit.rating_count ?? 0
         }
+      })
+      .sort((a, b) => b.similarityRate - a.similarityRate)
 
-        return similarityRate > (best?.similarityRate ?? 0) ? current : best
-      },
-      null
-    )
+    const bestMatch = scored[0]
 
-    if (!bestMatch || bestMatch.similarityRate < 0.2) {
+    if (bestMatch.similarityRate < 0.2) {
       return {
+        alternatives: toAlternatives(scored),
         link: searchFallbackUrl,
         status: RatingResultStatus.Uncertain
       } as RatingResponse
@@ -133,8 +138,8 @@ export async function fetchRatingFromVivino(
 
     type ScoredWine = RatingResponse & { similarityRate: number }
 
-    const bestMatch = matches.reduce<null | ScoredWine>(
-      (best, match: VivinoMatch) => {
+    const scored = matches
+      .map((match: VivinoMatch): ScoredWine => {
         const wineName = match.vintage.name
         const rating = match.vintage.statistics.ratings_average ?? 0
         const votes = match.vintage.statistics.ratings_count ?? 0
@@ -144,7 +149,7 @@ export async function fetchRatingFromVivino(
           wineName
         )
 
-        const current: ScoredWine = {
+        return {
           link,
           name: wineName,
           rating,
@@ -152,18 +157,34 @@ export async function fetchRatingFromVivino(
           status: RatingResultStatus.Found,
           votes
         }
+      })
+      .sort((a, b) => b.similarityRate - a.similarityRate)
 
-        return similarityRate > (best?.similarityRate ?? 0) ? current : best
-      },
-      null
-    )
+    const bestMatch = scored[0]
 
-    if (!bestMatch || bestMatch.similarityRate < 0.5) {
-      return uncertainFallback
+    if (bestMatch.similarityRate < 0.5) {
+      return { ...uncertainFallback, alternatives: toAlternatives(scored) }
     }
 
     return bestMatch
   } catch {
     return uncertainFallback
   }
+}
+
+function toAlternatives(
+  scored: {
+    link: null | string
+    name: null | string
+    rating: number
+    votes: number
+  }[]
+): RatingAlternative[] {
+  return scored
+    .slice(0, MAX_ALTERNATIVES)
+    .filter(
+      (s): s is { link: string; name: string; rating: number; votes: number } =>
+        s.link !== null && s.name !== null
+    )
+    .map(({ link, name, rating, votes }) => ({ link, name, rating, votes }))
 }
