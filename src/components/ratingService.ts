@@ -12,12 +12,15 @@ import { saveRating as cacheRating, tryGetRating } from './ratingsCache'
 export async function fetchRating(
   productId: string,
   productName: string,
-  type: ProductType
+  type: ProductType,
+  includeImage = false
 ): Promise<RatingResponse> {
   try {
-    const ratingRequest = { productId, productName, query: type }
+    const ratingRequest = { includeImage, productId, productName, query: type }
     const cachedRating = await tryGetRating(ratingRequest)
-    if (cachedRating) {
+    // An entry cached by a list page has no thumbnails; when the product
+    // page asks for images, refetch instead of serving the imageless copy.
+    if (cachedRating && !(includeImage && isMissingImages(cachedRating, type))) {
       return cachedRating
     }
     const response = await browser.runtime.sendMessage<
@@ -32,6 +35,16 @@ export async function fetchRating(
   } catch {
     return { status: RatingResultStatus.NotFound } as RatingResponse
   }
+}
+
+function isMissingImages(rating: RatingResponse, type: ProductType): boolean {
+  if (type !== ProductType.Wine) {
+    return false
+  }
+  if (rating.status === RatingResultStatus.Found) {
+    return !rating.imageDataUrl
+  }
+  return rating.alternatives?.some((a) => !a.imageDataUrl) ?? false
 }
 
 const LIST_FETCH_DELAY_MS = 300

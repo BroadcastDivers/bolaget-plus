@@ -20,6 +20,9 @@ const UNTAPPD_ALGOLIA_SEARCH_KEY = '1d347324d67ec472bb7132c66aead485'
 // no match is confident enough to auto-select.
 const MAX_ALTERNATIVES = 3
 
+// A hung image download must not hold up the rating itself.
+const IMAGE_FETCH_TIMEOUT_MS = 4000
+
 export async function fetchRatingFromUntappd(
   productName: string
 ): Promise<RatingResponse> {
@@ -88,14 +91,23 @@ export async function fetchRatingFromUntappd(
       } as RatingResponse
     }
 
-    return bestMatch
+    // Return only the response contract — similarityRate is internal.
+    return {
+      brewery: bestMatch.brewery,
+      link: bestMatch.link,
+      name: bestMatch.name,
+      rating: bestMatch.rating,
+      status: bestMatch.status,
+      votes: bestMatch.votes
+    } as BeerResponse
   } catch {
     return { status: RatingResultStatus.NotFound } as RatingResponse
   }
 }
 
 export async function fetchRatingFromVivino(
-  query: string
+  query: string,
+  includeImage = true
 ): Promise<RatingResponse> {
   const params = new URLSearchParams({
     facets: 'false',
@@ -172,16 +184,27 @@ export async function fetchRatingFromVivino(
 
     if (bestMatch.similarityRate < 0.5) {
       const top = scored.slice(0, MAX_ALTERNATIVES)
-      await Promise.all(
-        top.map(async (wine) => {
-          wine.imageDataUrl = await fetchImageAsDataUrl(wine.imageUrl)
-        })
-      )
+      if (includeImage) {
+        await Promise.all(
+          top.map(async (wine) => {
+            wine.imageDataUrl = await fetchImageAsDataUrl(wine.imageUrl)
+          })
+        )
+      }
       return { ...uncertainFallback, alternatives: toAlternatives(top) }
     }
 
-    bestMatch.imageDataUrl = await fetchImageAsDataUrl(bestMatch.imageUrl)
-    return bestMatch
+    // Return only the response contract — similarityRate/imageUrl are internal.
+    return {
+      imageDataUrl: includeImage
+        ? await fetchImageAsDataUrl(bestMatch.imageUrl)
+        : undefined,
+      link: bestMatch.link,
+      name: bestMatch.name,
+      rating: bestMatch.rating,
+      status: bestMatch.status,
+      votes: bestMatch.votes
+    }
   } catch {
     return uncertainFallback
   }
@@ -196,7 +219,9 @@ async function fetchImageAsDataUrl(
     return undefined
   }
   try {
-    const response = await fetch(url)
+    const response = await fetch(url, {
+      signal: AbortSignal.timeout(IMAGE_FETCH_TIMEOUT_MS)
+    })
     if (!response.ok) {
       return undefined
     }

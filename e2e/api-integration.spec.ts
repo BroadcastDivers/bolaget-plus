@@ -239,6 +239,52 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
     expect(result.alternatives?.[0].imageDataUrl).toMatch(/^data:image\/png;base64,/);
   });
 
+  test('skips thumbnail downloads when includeImage is false (list pages)', async () => {
+    const imageRequests: string[] = [];
+    globalThis.fetch = ((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/explore/explore')) {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              explore_vintage: {
+                matches: [
+                  {
+                    vintage: {
+                      id: 42,
+                      image: {
+                        variations: {
+                          label_medium: '//images.vivino.com/thumbs/x.png'
+                        }
+                      },
+                      name: 'Black Stallion Cabernet Sauvignon 2023',
+                      statistics: { ratings_average: 4.1, ratings_count: 54 },
+                      wine: { id: 43, seo_name: 'irrelevant' }
+                    }
+                  }
+                ]
+              }
+            })
+        } as Response);
+      }
+      imageRequests.push(url);
+      return Promise.reject(new Error('unexpected image fetch'));
+    }) as typeof fetch;
+
+    const result = await fetchRatingFromVivino(
+      'Black Stallion Napa Valley Cabernet Sauvignon 2023',
+      false
+    );
+
+    expect(result.status).toBe(RatingResultStatus.Found);
+    expect(result.imageDataUrl).toBeUndefined();
+    expect(imageRequests).toHaveLength(0);
+    // Internal scoring fields must not leak into the response/cache.
+    expect(result).not.toHaveProperty('similarityRate');
+    expect(result).not.toHaveProperty('imageUrl');
+  });
+
   test('returns no alternatives when the explore API has no matches', async () => {
     globalThis.fetch = (() =>
       Promise.resolve({
