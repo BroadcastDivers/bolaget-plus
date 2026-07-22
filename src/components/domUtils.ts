@@ -130,6 +130,18 @@ const STYLES = `
     font-size: 11px;
     font-weight: 400;
   }
+  #${RATING_CONTAINER_ID} .bp-thumb {
+    width: 36px;
+    height: 48px;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
+  #${RATING_CONTAINER_ID} .bp-alt-thumb {
+    width: 28px;
+    height: 38px;
+    object-fit: contain;
+    flex-shrink: 0;
+  }
   #${RATING_CONTAINER_ID} .bp-spinner-wrap {
     display: flex;
     justify-content: center;
@@ -247,6 +259,9 @@ export function setRating(
         ${svg}
         ${scoreHtml}
       `
+  if (rating.imageDataUrl) {
+    ratingRow.prepend(createThumbnail(rating.imageDataUrl, 'bp-thumb'))
+  }
 
   const meta = document.createElement('div')
   meta.className = 'bp-meta'
@@ -328,6 +343,10 @@ function createAlternativeItem(
   item.target = '_blank'
   item.rel = 'noopener noreferrer'
 
+  if (alternative.imageDataUrl) {
+    item.appendChild(createThumbnail(alternative.imageDataUrl, 'bp-alt-thumb'))
+  }
+
   const name = document.createElement('span')
   name.className = 'bp-alt-name'
   name.textContent = alternative.name
@@ -366,6 +385,14 @@ function createSourceLink(
     `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>`
   )
   return linkElement
+}
+
+function createThumbnail(dataUrl: string, className: string): HTMLImageElement {
+  const img = document.createElement('img')
+  img.className = className
+  img.src = dataUrl
+  img.alt = ''
+  return img
 }
 
 function ensureStyles(): void {

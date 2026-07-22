@@ -147,6 +147,98 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
     });
   });
 
+  test('attaches label thumbnails as data URLs (page CSP blocks hotlinking)', async () => {
+    const exploreJson = {
+      explore_vintage: {
+        matches: [
+          {
+            vintage: {
+              id: 42,
+              image: {
+                variations: {
+                  label_medium: '//images.vivino.com/thumbs/fake_150x200.png'
+                }
+              },
+              name: 'Black Stallion Cabernet Sauvignon 2023',
+              statistics: { ratings_average: 4.1, ratings_count: 54 },
+              wine: { id: 43, seo_name: 'irrelevant' }
+            }
+          }
+        ]
+      }
+    };
+    const fakePng = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
+
+    globalThis.fetch = ((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/explore/explore')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(exploreJson)
+        } as Response);
+      }
+      // Image request — must be the https-normalized thumbnail URL.
+      expect(url).toBe('https://images.vivino.com/thumbs/fake_150x200.png');
+      return Promise.resolve({
+        arrayBuffer: () => Promise.resolve(fakePng.buffer),
+        headers: new Headers({ 'content-type': 'image/png' }),
+        ok: true
+      } as unknown as Response);
+    }) as typeof fetch;
+
+    const result = await fetchRatingFromVivino(
+      'Black Stallion Napa Valley Cabernet Sauvignon 2023'
+    );
+
+    expect(result.status).toBe(RatingResultStatus.Found);
+    expect(result.imageDataUrl).toBe(
+      `data:image/png;base64,${Buffer.from(fakePng).toString('base64')}`
+    );
+  });
+
+  test('attaches thumbnails to alternatives when the match is uncertain', async () => {
+    const fakePng = new Uint8Array([1, 2, 3]);
+    globalThis.fetch = ((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes('/api/explore/explore')) {
+        return Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              explore_vintage: {
+                matches: [
+                  {
+                    vintage: {
+                      id: 7,
+                      image: {
+                        variations: {
+                          label_medium: '//images.vivino.com/thumbs/alt.png'
+                        }
+                      },
+                      name: 'Totally Unrelated Wine',
+                      statistics: { ratings_average: 4.0, ratings_count: 10 },
+                      wine: { id: 8, seo_name: 'x' }
+                    }
+                  }
+                ]
+              }
+            })
+        } as Response);
+      }
+      return Promise.resolve({
+        arrayBuffer: () => Promise.resolve(fakePng.buffer),
+        headers: new Headers({ 'content-type': 'image/png' }),
+        ok: true
+      } as unknown as Response);
+    }) as typeof fetch;
+
+    const result = await fetchRatingFromVivino('Zzz Qqq 1999');
+
+    expect(result.status).toBe(RatingResultStatus.Uncertain);
+    expect(result.alternatives).toHaveLength(1);
+    expect(result.alternatives?.[0].imageDataUrl).toMatch(/^data:image\/png;base64,/);
+  });
+
   test('returns no alternatives when the explore API has no matches', async () => {
     globalThis.fetch = (() =>
       Promise.resolve({
