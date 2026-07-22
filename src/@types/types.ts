@@ -39,6 +39,10 @@ export interface RatingResponse {
   name: null | string
   rating: number
   status: RatingResultStatus
+  // Set when the result reflects a transient failure (rate limit, network
+  // error) rather than a definitive lookup miss — never cached, so the next
+  // visit retries instead of pinning a wrong answer for a day.
+  transient?: boolean
   votes: number
 }
 

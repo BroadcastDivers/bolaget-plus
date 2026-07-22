@@ -57,6 +57,8 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
     expect(result.link).toBe(
       'https://www.vivino.com/search/wines?q=Torre%20do%20Olivar'
     );
+    // A genuine no-match is definitive and may be cached.
+    expect(result.transient).toBeUndefined();
   });
 
   test('returns Uncertain with a search link when the request fails', async () => {
@@ -67,6 +69,18 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
 
     expect(result.status).toBe(RatingResultStatus.Uncertain);
     expect(result.link).toContain('vivino.com/search/wines');
+    // Network failures are transient and must not be cached for a day.
+    expect(result.transient).toBe(true);
+  });
+
+  test('marks rate-limited responses transient so they are not cached', async () => {
+    globalThis.fetch = (() =>
+      Promise.resolve({ ok: false, status: 429 } as Response)) as typeof fetch;
+
+    const result = await fetchRatingFromVivino('Some Wine');
+
+    expect(result.status).toBe(RatingResultStatus.Uncertain);
+    expect(result.transient).toBe(true);
   });
 
   // Regression test: vivino.com/wines/{id} resolves by vintage id, not the
