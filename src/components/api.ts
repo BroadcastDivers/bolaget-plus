@@ -138,7 +138,7 @@ export async function fetchRatingFromVivino(
         const wineName = match.vintage.name
         const rating = match.vintage.statistics.ratings_average ?? 0
         const votes = match.vintage.statistics.ratings_count ?? 0
-        const link = `https://www.vivino.com/wines/${match.vintage.wine.id.toString()}`
+        const link = `https://www.vivino.com/wines/${match.vintage.id.toString()}`
         const similarityRate = stringSimilarity.compareTwoStrings(
           query,
           wineName
