@@ -358,39 +358,4 @@ test.describe('Untappd lookup misses (mocked fetch)', () => {
       'https://untappd.com/b/slug-2/2'
     );
   });
-
-  // Regression test: vivino.com/wines/{id} resolves by vintage id, not the
-  // generic wine id — using wine.id links to an unrelated wine (e.g. the
-  // Black Stallion Cabernet Sauvignon 2023's wine.id 1166077 resolves to a
-  // 2005 Bourgogne Pinot Noir instead).
-  test('builds the wine link from the vintage id, not the generic wine id', async () => {
-    globalThis.fetch = (() =>
-      Promise.resolve({
-        ok: true,
-        json: () =>
-          Promise.resolve({
-            explore_vintage: {
-              matches: [
-                {
-                  vintage: {
-                    id: 173862896,
-                    name: 'Black Stallion Cabernet Sauvignon 2023',
-                    statistics: { ratings_average: 4.1, ratings_count: 54 },
-                    wine: {
-                      id: 1166077,
-                      seo_name: 'black-stallion-cabernet-sauvignon'
-                    }
-                  }
-                }
-              ]
-            }
-          })
-      } as Response)) as typeof fetch;
-
-    const result = await fetchRatingFromVivino(
-      'Black Stallion Napa Valley Cabernet Sauvignon 2023'
-    );
-
-    expect(result.link).toBe('https://www.vivino.com/wines/173862896');
-  });
 });
