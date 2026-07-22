@@ -280,7 +280,7 @@ export function setUncertain(productType: ProductType, rating: RatingResponse) {
   message.className = 'bp-message'
   message.innerText =
     alternatives.length > 0
-      ? `${i18n.t('didYouMean')}:`
+      ? `${i18n.t('closestMatches')}:`
       : i18n.t('uncertainMatch')
   ratingContainer.appendChild(message)
 
