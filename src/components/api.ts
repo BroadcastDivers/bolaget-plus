@@ -240,9 +240,7 @@ async function fetchImageAsDataUrl(
   }
 }
 
-function normalizeImageUrl(
-  url: null | string | undefined
-): string | undefined {
+function normalizeImageUrl(url: null | string | undefined): string | undefined {
   if (!url) {
     return undefined
   }
