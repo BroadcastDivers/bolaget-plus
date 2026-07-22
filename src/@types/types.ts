@@ -16,6 +16,7 @@ export type BeerResponse = RatingResponse & {
 }
 
 export interface RatingAlternative {
+  imageDataUrl?: string
   link: string
   name: string
   rating: number
@@ -30,6 +31,7 @@ export interface RatingRequest {
 
 export interface RatingResponse {
   alternatives?: RatingAlternative[]
+  imageDataUrl?: string
   link: null | string
   name: null | string
   rating: number
@@ -54,6 +56,12 @@ export interface UntappdSearchJSON {
 export interface VivinoMatch {
   vintage: {
     id: number
+    image?: {
+      location?: null | string
+      variations?: {
+        label_medium?: string
+      }
+    }
     name: string
     statistics: {
       ratings_average: null | number
