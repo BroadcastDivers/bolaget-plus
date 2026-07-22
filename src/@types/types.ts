@@ -15,6 +15,13 @@ export type BeerResponse = RatingResponse & {
   brewery: null | string
 }
 
+export interface RatingAlternative {
+  link: string
+  name: string
+  rating: number
+  votes: number
+}
+
 export interface RatingRequest {
   productId: string
   productName: string
@@ -22,6 +29,7 @@ export interface RatingRequest {
 }
 
 export interface RatingResponse {
+  alternatives?: RatingAlternative[]
   link: null | string
   name: null | string
   rating: number

@@ -3,6 +3,7 @@ import { i18n } from '#i18n'
 import {
   BeerResponse,
   ProductType,
+  RatingAlternative,
   RatingResponse,
   RatingResultStatus
 } from '@/@types/types'
@@ -88,6 +89,46 @@ const STYLES = `
     color: #666;
     text-align: center;
     padding: 2px 0;
+  }
+  #${RATING_CONTAINER_ID} .bp-alt-list {
+    display: flex;
+    flex-direction: column;
+    margin-top: 6px;
+  }
+  #${RATING_CONTAINER_ID} .bp-alt-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 44px;
+    padding: 6px 8px;
+    border-top: 1px solid #f0f0f0;
+    color: #1a1a1a;
+    text-decoration: none;
+  }
+  #${RATING_CONTAINER_ID} .bp-alt-item:hover,
+  #${RATING_CONTAINER_ID} .bp-alt-item:active {
+    background: #f6f6f6;
+  }
+  #${RATING_CONTAINER_ID} .bp-alt-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  #${RATING_CONTAINER_ID} .bp-alt-score {
+    font-weight: 700;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+  #${RATING_CONTAINER_ID} .bp-alt-votes {
+    color: #888;
+    font-size: 11px;
+    font-weight: 400;
   }
   #${RATING_CONTAINER_ID} .bp-spinner-wrap {
     display: flex;
@@ -231,12 +272,26 @@ export function setRating(
   ratingContainer.appendChild(footer)
 }
 
-export function setUncertain(productType: ProductType, link: null | string) {
+export function setUncertain(productType: ProductType, rating: RatingResponse) {
   const ratingContainer = getAndClearContainer()
+  const alternatives = rating.alternatives ?? []
 
   const message = document.createElement('div')
   message.className = 'bp-message'
-  message.innerText = i18n.t('uncertainMatch')
+  message.innerText =
+    alternatives.length > 0
+      ? `${i18n.t('didYouMean')}:`
+      : i18n.t('uncertainMatch')
+  ratingContainer.appendChild(message)
+
+  if (alternatives.length > 0) {
+    const list = document.createElement('div')
+    list.className = 'bp-alt-list'
+    for (const alternative of alternatives) {
+      list.appendChild(createAlternativeItem(alternative))
+    }
+    ratingContainer.appendChild(list)
+  }
 
   const linkLabel =
     productType === ProductType.Wine
@@ -247,9 +302,8 @@ export function setUncertain(productType: ProductType, link: null | string) {
   footer.className = 'bp-footer'
   footer.style.justifyContent = 'center'
   footer.style.marginTop = '6px'
-  footer.appendChild(createSourceLink(link, linkLabel))
+  footer.appendChild(createSourceLink(rating.link, linkLabel))
 
-  ratingContainer.appendChild(message)
   ratingContainer.appendChild(footer)
 }
 
@@ -263,6 +317,36 @@ export function showLoadingSpinner() {
     `
 
   ratingContainer.appendChild(spinner)
+}
+
+function createAlternativeItem(
+  alternative: RatingAlternative
+): HTMLAnchorElement {
+  const item = document.createElement('a')
+  item.className = 'bp-alt-item'
+  item.href = alternative.link
+  item.target = '_blank'
+  item.rel = 'noopener noreferrer'
+
+  const name = document.createElement('span')
+  name.className = 'bp-alt-name'
+  name.textContent = alternative.name
+
+  const score = document.createElement('span')
+  score.className = 'bp-alt-score'
+  // A score of 0 means the source has too few ratings to compute one yet.
+  score.textContent =
+    alternative.rating > 0 ? alternative.rating.toString() : 'N/A'
+  if (alternative.votes > 0) {
+    const votes = document.createElement('span')
+    votes.className = 'bp-alt-votes'
+    votes.textContent = ` (${alternative.votes.toString()})`
+    score.appendChild(votes)
+  }
+
+  item.appendChild(name)
+  item.appendChild(score)
+  return item
 }
 
 function createSourceLink(
