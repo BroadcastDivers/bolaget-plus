@@ -318,25 +318,25 @@ function normalizeImageUrl(url: null | string | undefined): string | undefined {
   return url.startsWith('//') ? `https:${url}` : url
 }
 
-// True when the query and candidate share a brand/producer token. Vivino's
-// explore results are all marketplace wines, so a same-style wine from a
-// different producer can outscore the (absent) real wine on style words alone;
-// requiring a brand token in common keeps those from being auto-accepted. When
-// the query has no distinctive token at all (name is entirely generic), there
-// is nothing to gate on, so it passes rather than block every candidate.
+// True when the candidate contains the query's brand token. Systembolaget puts
+// the producer/brand first in the product title, so the query's leading
+// distinctive token is the brand. Requiring that specific token — not just any
+// overlap — keeps shared appellation names (Conegliano, Valdobbiadene, Rioja,
+// …) from passing the gate for a different producer's wine: those are as
+// generic as the style words but far too numerous to blocklist. When the query
+// has no distinctive token at all (name is entirely generic), there is nothing
+// to gate on, so it passes rather than block every candidate.
 function sharesBrandToken(query: string, candidate: string): boolean {
   const queryTokens = distinctiveTokens(query)
   if (queryTokens.length === 0) {
     return true
   }
-  const candidateTokens = distinctiveTokens(candidate)
-  return queryTokens.some((queryToken) =>
-    candidateTokens.some(
-      (candidateToken) =>
-        candidateToken === queryToken ||
-        stringSimilarity.compareTwoStrings(queryToken, candidateToken) >=
-          BRAND_TOKEN_MATCH_THRESHOLD
-    )
+  const brandToken = queryTokens[0]
+  return distinctiveTokens(candidate).some(
+    (candidateToken) =>
+      candidateToken === brandToken ||
+      stringSimilarity.compareTwoStrings(brandToken, candidateToken) >=
+        BRAND_TOKEN_MATCH_THRESHOLD
   )
 }
 
