@@ -299,6 +299,102 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
     expect(result).not.toHaveProperty('imageUrl');
   });
 
+  // Regression: Vivino only indexes marketplace wines, so a wine that isn't on
+  // Vivino returns same-style, different-producer candidates. Shared style
+  // words ("Prosecco Extra Dry", "Blanc de Noirs Brut", "Cava Brut") push the
+  // name-similarity over 0.5, but with no brand token in common the result must
+  // be Uncertain, not a confidently-wrong Found. Reported cases:
+  //   Casteloro …  -> Alberto Nani Organic Prosecco Extra Dry
+  //   Noria …      -> Fleury Blanc de Noirs Brut Champagne
+  //   El Mar …     -> Mas Fi Cava Brut
+  for (const {
+    alt,
+    query,
+    winery,
+    wineName
+  } of [
+    {
+      alt: 'Alberto Nani Organic Prosecco Extra Dry',
+      query: 'Casteloro Prosecco Organic Extra Dry',
+      wineName: 'Alberto Nani Organic Prosecco Extra Dry',
+      winery: 'Alberto Nani'
+    },
+    {
+      alt: 'Fleury Blanc de Noirs Brut Champagne',
+      query: 'Noria Blanc de Noirs Brut',
+      wineName: 'Fleury Blanc de Noirs Brut Champagne',
+      winery: 'Fleury'
+    },
+    {
+      alt: 'Mas Fi Cava Brut',
+      query: 'El Mar Cava Brut',
+      wineName: 'Mas Fi Cava Brut',
+      winery: 'Mas Fi'
+    },
+    {
+      alt: 'Cuvage Brut Rosé',
+      query: 'Gorgeous Brut Rosé',
+      wineName: 'Cuvage Brut Rosé',
+      winery: 'Cuvage'
+    }
+  ]) {
+    test(`is Uncertain when only style words match, not the brand (${winery})`, async () => {
+      globalThis.fetch = (() =>
+        Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              explore_vintage: {
+                matches: [
+                  {
+                    vintage: {
+                      id: 99,
+                      name: wineName,
+                      statistics: { ratings_average: 4.0, ratings_count: 500 },
+                      wine: { id: 100, seo_name: 'x', winery: { name: winery } }
+                    }
+                  }
+                ]
+              }
+            })
+        } as Response)) as typeof fetch;
+
+      const result = await fetchRatingFromVivino(query, false);
+
+      expect(result.status).toBe(RatingResultStatus.Uncertain);
+      expect(result.link).toContain('vivino.com/search/wines');
+      // The wrong wine is still offered as a "did you mean" suggestion.
+      expect(result.alternatives?.[0].name).toBe(alt);
+    });
+  }
+
+  test('stays Found when the brand token is shared', async () => {
+    globalThis.fetch = (() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            explore_vintage: {
+              matches: [
+                {
+                  vintage: {
+                    id: 55,
+                    name: 'Barefoot Bubbly Brut Cuvée',
+                    statistics: { ratings_average: 3.9, ratings_count: 900 },
+                    wine: { id: 56, seo_name: 'x', winery: { name: 'Barefoot' } }
+                  }
+                }
+              ]
+            }
+          })
+      } as Response)) as typeof fetch;
+
+    const result = await fetchRatingFromVivino('Barefoot Brut Cuvée', false);
+
+    expect(result.status).toBe(RatingResultStatus.Found);
+    expect(result.link).toBe('https://www.vivino.com/wines/55');
+  });
+
   test('returns no alternatives when the explore API has no matches', async () => {
     globalThis.fetch = (() =>
       Promise.resolve({
