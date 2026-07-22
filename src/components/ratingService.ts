@@ -20,7 +20,10 @@ export async function fetchRating(
     const cachedRating = await tryGetRating(ratingRequest)
     // An entry cached by a list page has no thumbnails; when the product
     // page asks for images, refetch instead of serving the imageless copy.
-    if (cachedRating && !(includeImage && isMissingImages(cachedRating, type))) {
+    if (
+      cachedRating &&
+      !(includeImage && isMissingImages(cachedRating, type))
+    ) {
       return cachedRating
     }
     const response = await browser.runtime.sendMessage<
@@ -28,7 +31,10 @@ export async function fetchRating(
       RatingResponse
     >(ratingRequest)
 
-    if (response.status !== RatingResultStatus.NotFound && !response.transient) {
+    if (
+      response.status !== RatingResultStatus.NotFound &&
+      !response.transient
+    ) {
       await cacheRating(ratingRequest, response)
     }
     return response
