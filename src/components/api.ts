@@ -137,8 +137,10 @@ export async function fetchRatingFromVivino(
       }
     })
 
+    // HTTP errors (429 rate limit, 5xx) are transient — show the search-link
+    // fallback but don't let it get cached as a definitive miss.
     if (!response.ok) {
-      return uncertainFallback
+      return { ...uncertainFallback, transient: true }
     }
 
     const data = (await response.json()) as VivinoResponseJSON
@@ -206,7 +208,7 @@ export async function fetchRatingFromVivino(
       votes: bestMatch.votes
     }
   } catch {
-    return uncertainFallback
+    return { ...uncertainFallback, transient: true }
   }
 }
 
