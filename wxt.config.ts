@@ -36,12 +36,15 @@ export default defineConfig({
     host_permissions: [
       'https://www.systembolaget.se/*',
       'https://www.vivino.com/*',
+      // Vivino serves label/bottle thumbnails from separate image hosts
+      'https://images.vivino.com/*',
+      'https://thumbs.vivino.com/*',
       'https://untappd.com/*',
       // Untappd's Algolia search index, used for beer lookups
       'https://9wbo4rq3ho-dsn.algolia.net/*'
     ],
     content_security_policy: {
-      extension_pages: `script-src 'self'; object-src 'self'; connect-src 'self' https://www.vivino.com https://untappd.com https://9wbo4rq3ho-dsn.algolia.net${isProduction ? '' : ' ws://localhost:3000/'};`
+      extension_pages: `script-src 'self'; object-src 'self'; connect-src 'self' https://www.vivino.com https://images.vivino.com https://thumbs.vivino.com https://untappd.com https://9wbo4rq3ho-dsn.algolia.net${isProduction ? '' : ' ws://localhost:3000/'};`
     },
     browser_specific_settings: {
       gecko: {

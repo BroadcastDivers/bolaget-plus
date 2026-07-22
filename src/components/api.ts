@@ -136,7 +136,10 @@ export async function fetchRatingFromVivino(
       return uncertainFallback
     }
 
-    type ScoredWine = RatingResponse & { similarityRate: number }
+    type ScoredWine = RatingResponse & {
+      imageUrl?: string
+      similarityRate: number
+    }
 
     const scored = matches
       .map((match: VivinoMatch): ScoredWine => {
@@ -144,12 +147,17 @@ export async function fetchRatingFromVivino(
         const rating = match.vintage.statistics.ratings_average ?? 0
         const votes = match.vintage.statistics.ratings_count ?? 0
         const link = `https://www.vivino.com/wines/${match.vintage.id.toString()}`
+        const imageUrl = normalizeImageUrl(
+          match.vintage.image?.variations?.label_medium ??
+            match.vintage.image?.location
+        )
         const similarityRate = stringSimilarity.compareTwoStrings(
           query,
           wineName
         )
 
         return {
+          imageUrl,
           link,
           name: wineName,
           rating,
@@ -163,17 +171,60 @@ export async function fetchRatingFromVivino(
     const bestMatch = scored[0]
 
     if (bestMatch.similarityRate < 0.5) {
-      return { ...uncertainFallback, alternatives: toAlternatives(scored) }
+      const top = scored.slice(0, MAX_ALTERNATIVES)
+      await Promise.all(
+        top.map(async (wine) => {
+          wine.imageDataUrl = await fetchImageAsDataUrl(wine.imageUrl)
+        })
+      )
+      return { ...uncertainFallback, alternatives: toAlternatives(top) }
     }
 
+    bestMatch.imageDataUrl = await fetchImageAsDataUrl(bestMatch.imageUrl)
     return bestMatch
   } catch {
     return uncertainFallback
   }
 }
 
+// Fetched by the background script because the systembolaget.se page CSP
+// (img-src) blocks hotlinking Vivino's image hosts; a data: URL is allowed.
+async function fetchImageAsDataUrl(
+  url: string | undefined
+): Promise<string | undefined> {
+  if (!url) {
+    return undefined
+  }
+  try {
+    const response = await fetch(url)
+    if (!response.ok) {
+      return undefined
+    }
+    const contentType = response.headers.get('content-type') ?? 'image/png'
+    const bytes = new Uint8Array(await response.arrayBuffer())
+    let binary = ''
+    const chunkSize = 8192
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
+    }
+    return `data:${contentType};base64,${btoa(binary)}`
+  } catch {
+    return undefined
+  }
+}
+
+function normalizeImageUrl(
+  url: null | string | undefined
+): string | undefined {
+  if (!url) {
+    return undefined
+  }
+  return url.startsWith('//') ? `https:${url}` : url
+}
+
 function toAlternatives(
   scored: {
+    imageDataUrl?: string
     link: null | string
     name: null | string
     rating: number
@@ -182,9 +233,9 @@ function toAlternatives(
 ): RatingAlternative[] {
   return scored
     .slice(0, MAX_ALTERNATIVES)
-    .filter(
-      (s): s is { link: string; name: string; rating: number; votes: number } =>
-        s.link !== null && s.name !== null
+    .flatMap(({ imageDataUrl, link, name, rating, votes }) =>
+      link !== null && name !== null
+        ? [{ imageDataUrl, link, name, rating, votes }]
+        : []
     )
-    .map(({ link, name, rating, votes }) => ({ link, name, rating, votes }))
 }
