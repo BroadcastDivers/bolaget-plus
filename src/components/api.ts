@@ -23,6 +23,51 @@ const MAX_ALTERNATIVES = 3
 // A hung image download must not hold up the rating itself.
 const IMAGE_FETCH_TIMEOUT_MS = 4000
 
+// Style/format words that are shared across thousands of unrelated wines. On
+// their own they must never be enough to accept a match: "Blanc de Noirs Brut"
+// or "Prosecco Extra Dry" can push the name-similarity over the accept
+// threshold even when the producer is completely different. The distinguishing
+// signal is the brand — enforced by the brand-overlap gate below.
+const GENERIC_WINE_WORDS = new Set([
+  'blanc',
+  'blancs',
+  'brut',
+  'cava',
+  'champagne',
+  'classico',
+  'cremant',
+  'crémant',
+  'demi',
+  'doc',
+  'docg',
+  'doux',
+  'dry',
+  'extra',
+  'gran',
+  'grande',
+  'noir',
+  'noirs',
+  'nv',
+  'organic',
+  'prosecco',
+  'reserva',
+  'reserve',
+  'riserva',
+  'rose',
+  'rosé',
+  'rouge',
+  'sec',
+  'sparkling',
+  'spumante',
+  'superiore',
+  'vintage',
+  'wine'
+])
+
+// How close two brand-like tokens must be to count as the same producer;
+// tolerates minor spelling/plural differences without matching unrelated words.
+const BRAND_TOKEN_MATCH_THRESHOLD = 0.8
+
 export async function fetchRatingFromUntappd(
   productName: string
 ): Promise<RatingResponse> {
@@ -153,11 +198,13 @@ export async function fetchRatingFromVivino(
     type ScoredWine = RatingResponse & {
       imageUrl?: string
       similarityRate: number
+      winery?: string
     }
 
     const scored = matches
       .map((match: VivinoMatch): ScoredWine => {
         const wineName = match.vintage.name
+        const winery = match.vintage.wine.winery?.name ?? undefined
         const rating = match.vintage.statistics.ratings_average ?? 0
         const votes = match.vintage.statistics.ratings_count ?? 0
         const link = `https://www.vivino.com/wines/${match.vintage.id.toString()}`
@@ -177,14 +224,23 @@ export async function fetchRatingFromVivino(
           rating,
           similarityRate,
           status: RatingResultStatus.Found,
-          votes
+          votes,
+          winery
         }
       })
       .sort((a, b) => b.similarityRate - a.similarityRate)
 
     const bestMatch = scored[0]
 
-    if (bestMatch.similarityRate < 0.5) {
+    // A high name-similarity built entirely on shared style words (e.g.
+    // "Prosecco Extra Dry") is not a real match unless the producer/brand also
+    // lines up; otherwise fall through to the Uncertain "did you mean" path.
+    const brandMatches = sharesBrandToken(
+      query,
+      `${bestMatch.winery ?? ''} ${bestMatch.name ?? ''}`
+    )
+
+    if (bestMatch.similarityRate < 0.5 || !brandMatches) {
       const top = scored.slice(0, MAX_ALTERNATIVES)
       if (includeImage) {
         await Promise.all(
@@ -210,6 +266,21 @@ export async function fetchRatingFromVivino(
   } catch {
     return { ...uncertainFallback, transient: true }
   }
+}
+
+// Splits text into lowercased, distinctive tokens: drops short filler ("de",
+// "di", "el"), bare vintage years, and the generic style words above, leaving
+// the brand/producer words that actually identify a wine.
+function distinctiveTokens(text: string): string[] {
+  return text
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .filter(
+      (token) =>
+        token.length > 2 &&
+        !/^\d+$/.test(token) &&
+        !GENERIC_WINE_WORDS.has(token)
+    )
 }
 
 // Fetched by the background script because the systembolaget.se page CSP
@@ -245,6 +316,28 @@ function normalizeImageUrl(url: null | string | undefined): string | undefined {
     return undefined
   }
   return url.startsWith('//') ? `https:${url}` : url
+}
+
+// True when the query and candidate share a brand/producer token. Vivino's
+// explore results are all marketplace wines, so a same-style wine from a
+// different producer can outscore the (absent) real wine on style words alone;
+// requiring a brand token in common keeps those from being auto-accepted. When
+// the query has no distinctive token at all (name is entirely generic), there
+// is nothing to gate on, so it passes rather than block every candidate.
+function sharesBrandToken(query: string, candidate: string): boolean {
+  const queryTokens = distinctiveTokens(query)
+  if (queryTokens.length === 0) {
+    return true
+  }
+  const candidateTokens = distinctiveTokens(candidate)
+  return queryTokens.some((queryToken) =>
+    candidateTokens.some(
+      (candidateToken) =>
+        candidateToken === queryToken ||
+        stringSimilarity.compareTwoStrings(queryToken, candidateToken) >=
+          BRAND_TOKEN_MATCH_THRESHOLD
+    )
+  )
 }
 
 function toAlternatives(

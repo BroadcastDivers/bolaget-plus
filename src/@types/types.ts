@@ -77,6 +77,7 @@ export interface VivinoMatch {
     wine: {
       id: number
       seo_name: string
+      winery?: null | { name: null | string }
     }
   }
 }
