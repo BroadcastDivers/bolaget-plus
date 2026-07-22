@@ -24,6 +24,9 @@ export interface RatingAlternative {
 }
 
 export interface RatingRequest {
+  // List-page badges never render images, so they skip the thumbnail
+  // download; product pages opt in.
+  includeImage?: boolean
   productId: string
   productName: string
   query: ProductType

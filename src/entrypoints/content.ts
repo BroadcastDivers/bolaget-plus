@@ -123,7 +123,7 @@ async function tryInsertOnProductPage() {
   try {
     domUtils.showLoadingSpinner()
 
-    const rating = await fetchRating(productId, productName, productType)
+    const rating = await fetchRating(productId, productName, productType, true)
     if (activeRequest !== request) return
     handleRating(productType, rating)
   } catch {
