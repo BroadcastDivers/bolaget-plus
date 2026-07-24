@@ -60,28 +60,28 @@ export interface UntappdSearchJSON {
   hits?: UntappdHit[]
 }
 
-export interface VivinoMatch {
-  vintage: {
-    id: number
-    image?: {
-      location?: null | string
-      variations?: {
-        label_medium?: string
-      }
-    }
-    name: string
-    statistics: {
-      ratings_average: null | number
-      ratings_count: null | number
-    }
-    wine: {
-      id: number
-      seo_name: string
-      winery?: null | { name: null | string }
+export interface VivinoHit {
+  hidden?: boolean
+  id: number
+  image?: {
+    location?: null | string
+    variations?: {
+      label_medium?: string
     }
   }
+  name: string
+  statistics?: {
+    ratings_average: null | number
+    ratings_count: null | number
+  }
+  vintages?: {
+    id: number
+    statistics?: { ratings_count: null | number }
+  }[]
+  winery?: null | { name: null | string }
 }
 
-export interface VivinoResponseJSON {
-  explore_vintage?: { matches: VivinoMatch[] }
+export interface VivinoSearchJSON {
+  hits?: VivinoHit[]
+  nbHits?: number
 }
