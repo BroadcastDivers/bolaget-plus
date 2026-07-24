@@ -41,10 +41,12 @@ export default defineConfig({
       'https://thumbs.vivino.com/*',
       'https://untappd.com/*',
       // Untappd's Algolia search index, used for beer lookups
-      'https://9wbo4rq3ho-dsn.algolia.net/*'
+      'https://9wbo4rq3ho-dsn.algolia.net/*',
+      // Vivino's Algolia search index, used for wine lookups
+      'https://9takgwjuxl-dsn.algolia.net/*'
     ],
     content_security_policy: {
-      extension_pages: `script-src 'self'; object-src 'self'; connect-src 'self' https://www.vivino.com https://images.vivino.com https://thumbs.vivino.com https://untappd.com https://9wbo4rq3ho-dsn.algolia.net${isProduction ? '' : ' ws://localhost:3000/'};`
+      extension_pages: `script-src 'self'; object-src 'self'; connect-src 'self' https://www.vivino.com https://images.vivino.com https://thumbs.vivino.com https://untappd.com https://9wbo4rq3ho-dsn.algolia.net https://9takgwjuxl-dsn.algolia.net${isProduction ? '' : ' ws://localhost:3000/'};`
     },
     browser_specific_settings: {
       gecko: {
