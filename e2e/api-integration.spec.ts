@@ -65,6 +65,12 @@ function vivinoSearchResponse(hits: VivinoHit[], nbHits?: number): Response {
   } as Response;
 }
 
+// Routes mocked fetches: true for the Algolia search call, false for the
+// image downloads that follow it.
+function isVivinoSearchUrl(url: string): boolean {
+  return new URL(url).hostname === '9takgwjuxl-dsn.algolia.net';
+}
+
 // Offline tests: even Algolia misses some wines, so a miss must surface an
 // Uncertain result with a working search link — never a dead-end NotFound.
 test.describe('Vivino lookup misses (mocked fetch)', () => {
@@ -213,7 +219,7 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
 
     globalThis.fetch = ((input: RequestInfo | URL) => {
       const url = String(input);
-      if (url.includes('algolia.net')) {
+      if (isVivinoSearchUrl(url)) {
         return Promise.resolve(
           vivinoSearchResponse([
             vivinoHit({
@@ -252,7 +258,7 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
     const fakePng = new Uint8Array([1, 2, 3]);
     globalThis.fetch = ((input: RequestInfo | URL) => {
       const url = String(input);
-      if (url.includes('algolia.net')) {
+      if (isVivinoSearchUrl(url)) {
         return Promise.resolve(
           vivinoSearchResponse([
             vivinoHit({
@@ -287,7 +293,7 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
     const imageRequests: string[] = [];
     globalThis.fetch = ((input: RequestInfo | URL) => {
       const url = String(input);
-      if (url.includes('algolia.net')) {
+      if (isVivinoSearchUrl(url)) {
         return Promise.resolve(
           vivinoSearchResponse([
             vivinoHit({
