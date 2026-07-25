@@ -97,8 +97,10 @@ contract used across the process boundary.
 
 **Caching** (`ratingsCache.ts`) uses `@wxt-dev/storage` with `local:` keys and
 per-item metadata timestamps; entries expire after 1 day. Reads evict their
-own expired entry; `removeExpiredRatings` (run on background startup) sweeps
-the rest so cached label images can't accumulate toward the storage quota.
+own expired entry; `removeExpiredRatings` (run on background startup, throttled
+to once an hour because it reads every cached value) sweeps the rest — expired
+entries, and either half of a torn write — so cached label images can't
+accumulate toward the storage quota.
 
 **i18n**: user-facing strings come from `src/locales/{sv,en}.yml` via
 `@wxt-dev/i18n`; default locale is Swedish (`sv`). Use `i18n.t('key')`, not
