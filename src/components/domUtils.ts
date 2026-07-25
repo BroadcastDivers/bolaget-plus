@@ -214,6 +214,8 @@ export function getAndClearContainer(): HTMLElement {
   }
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   container = document.getElementById(RATING_CONTAINER_BODY_ID)!
+  // Re-rendering can remove a hovered thumbnail without a mouseleave firing.
+  hideZoomPreview()
   container.innerHTML = ''
   return container
 }
@@ -429,11 +431,7 @@ function attachZoomOnHover(img: HTMLImageElement, dataUrl: string): void {
     positionZoomPreview(preview, img)
     preview.style.display = 'block'
   })
-  img.addEventListener('mouseleave', () => {
-    if (zoomPreview) {
-      zoomPreview.style.display = 'none'
-    }
-  })
+  img.addEventListener('mouseleave', hideZoomPreview)
 }
 
 function ensureStyles(): void {
@@ -485,8 +483,20 @@ function getZoomPreview(): HTMLImageElement {
     zoomPreview.className = 'bp-zoom-preview'
     zoomPreview.alt = ''
     document.body.appendChild(zoomPreview)
+    // The preview position is a snapshot of the anchor; hide instead of
+    // drifting when the page (or any ancestor) scrolls.
+    window.addEventListener('scroll', hideZoomPreview, {
+      capture: true,
+      passive: true
+    })
   }
   return zoomPreview
+}
+
+function hideZoomPreview(): void {
+  if (zoomPreview) {
+    zoomPreview.style.display = 'none'
+  }
 }
 
 function positionZoomPreview(
@@ -495,16 +505,18 @@ function positionZoomPreview(
 ): void {
   const margin = 8
   const gap = 12
-  const size = 232 // preview max box (max-height 260 minus padding) for clamping
+  // Max rendered box: max-width/max-height (220x260) plus 6px padding per side.
+  const boxWidth = 232
+  const boxHeight = 272
   const rect = anchor.getBoundingClientRect()
 
-  let top = rect.top + rect.height / 2 - size / 2
-  top = Math.max(margin, Math.min(top, window.innerHeight - size - margin))
+  let top = rect.top + rect.height / 2 - boxHeight / 2
+  top = Math.max(margin, Math.min(top, window.innerHeight - boxHeight - margin))
 
   // Prefer the right of the thumbnail; flip left when it would overflow.
   let left = rect.right + gap
-  if (left + size > window.innerWidth - margin) {
-    left = rect.left - gap - size
+  if (left + boxWidth > window.innerWidth - margin) {
+    left = rect.left - gap - boxWidth
   }
 
   preview.style.top = `${top.toString()}px`
