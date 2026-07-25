@@ -57,11 +57,24 @@ const LIST_FETCH_DELAY_MS = 300
 
 let listFetchQueue: Promise<undefined> = Promise.resolve(undefined)
 
-export function enqueueListFetch(
+export async function enqueueListFetch(
   productId: string,
   productName: string,
   type: ProductType
 ): Promise<RatingResponse> {
+  // Cached ratings render immediately — only real network fetches go through
+  // the throttled queue, so a revisited list page fills in instantly instead
+  // of trickling one badge per delay tick.
+  const cached = await tryGetRating({
+    includeImage: false,
+    productId,
+    productName,
+    query: type
+  }).catch(() => null)
+  if (cached) {
+    return cached
+  }
+
   const task = listFetchQueue.then(
     () =>
       new Promise<RatingResponse>((resolve) => {
