@@ -2,9 +2,12 @@ import browser from 'webextension-polyfill'
 
 import { ProductType, type RatingRequest } from '@/@types/types'
 import { fetchRatingFromUntappd, fetchRatingFromVivino } from '@/components/api'
+import { removeExpiredRatings } from '@/components/ratingsCache'
 
 export default defineBackground(() => {
-  // console.log('Running with id:', { id: browser.runtime.id })
+  // The MV3 service worker starts on browser launch and on events, so this
+  // sweep runs often enough to keep expired entries from accumulating.
+  void removeExpiredRatings().catch(() => undefined)
 })
 
 function isGetRatingMessage(message: unknown): message is RatingRequest {
