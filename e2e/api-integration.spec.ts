@@ -1,18 +1,23 @@
-import { test, expect } from '@playwright/test';
-import { fetchRatingFromVivino, fetchRatingFromUntappd } from '../src/components/api';
-import { RatingResultStatus } from '../src/@types/types';
-import type { VivinoHit } from '../src/@types/types';
+import { expect, test } from '@playwright/test'
+
+import type { VivinoHit } from '../src/@types/types'
+
+import { RatingResultStatus } from '../src/@types/types'
+import {
+  fetchRatingFromUntappd,
+  fetchRatingFromVivino
+} from '../src/components/api'
 
 test.describe('API Integration Tests', () => {
   test('fetchRatingFromVivino returns data for valid query', async () => {
-    const result = await fetchRatingFromVivino('Bread & Butter');
+    const result = await fetchRatingFromVivino('Bread & Butter')
 
-    expect(result).not.toBeNull();
-    expect(result?.status).toBe(RatingResultStatus.Found);
-    expect(result?.rating).toBeGreaterThan(0);
-    expect(result?.votes).toBeGreaterThan(0);
-    expect(result?.link).toContain('vivino.com');
-  });
+    expect(result).not.toBeNull()
+    expect(result.status).toBe(RatingResultStatus.Found)
+    expect(result.rating).toBeGreaterThan(0)
+    expect(result.votes).toBeGreaterThan(0)
+    expect(result.link).toContain('vivino.com')
+  })
 
   // Regression: the explore endpoint missed even top-selling wines (its index
   // only covers marketplace listings). The Algolia index must find them.
@@ -20,101 +25,109 @@ test.describe('API Integration Tests', () => {
     const result = await fetchRatingFromVivino(
       'Casillero del Diablo Cabernet Sauvignon',
       false
-    );
+    )
 
-    expect(result.status).toBe(RatingResultStatus.Found);
-    expect(result.votes).toBeGreaterThan(10000);
-  });
+    expect(result.status).toBe(RatingResultStatus.Found)
+    expect(result.votes).toBeGreaterThan(10000)
+  })
 
   test('fetchRatingFromUntappd returns data for valid query', async () => {
-    const result = await fetchRatingFromUntappd('Pabst Blue Ribbon');
+    const result = await fetchRatingFromUntappd('Pabst Blue Ribbon')
 
-    expect(result).not.toBeNull();
-    expect(result?.status).toBe(RatingResultStatus.Found);
-    expect(result?.rating).toBeGreaterThan(0);
-    expect(result?.votes).toBeGreaterThan(0);
-    expect(result?.link).toContain('untappd.com');
-  });
+    expect(result).not.toBeNull()
+    expect(result.status).toBe(RatingResultStatus.Found)
+    expect(result.rating).toBeGreaterThan(0)
+    expect(result.votes).toBeGreaterThan(0)
+    expect(result.link).toContain('untappd.com')
+  })
 
   test('fetchRatingFromUntappd returns data for a cider query', async () => {
-    const result = await fetchRatingFromUntappd('Rekorderlig Päron');
+    const result = await fetchRatingFromUntappd('Rekorderlig Päron')
 
-    expect(result).not.toBeNull();
-    expect(result?.status).toBe(RatingResultStatus.Found);
-    expect(result?.rating).toBeGreaterThan(0);
-    expect(result?.votes).toBeGreaterThan(0);
-    expect(result?.link).toContain('untappd.com');
-  });
-});
+    expect(result).not.toBeNull()
+    expect(result.status).toBe(RatingResultStatus.Found)
+    expect(result.rating).toBeGreaterThan(0)
+    expect(result.votes).toBeGreaterThan(0)
+    expect(result.link).toContain('untappd.com')
+  })
+})
+
+// Routes mocked fetches: true for the Algolia search call, false for the
+// image downloads that follow it.
+function isVivinoSearchUrl(url: string): boolean {
+  return new URL(url).hostname === '9takgwjuxl-dsn.algolia.net'
+}
+
+// The fetch mocks receive whatever fetch() was called with; extract the URL
+// without falling into Object's default stringification for Request objects.
+function requestUrl(input: RequestInfo | URL): string {
+  if (typeof input === 'string') return input
+  if (input instanceof URL) return input.toString()
+  return input.url
+}
 
 // Builds an Algolia WINES_prod hit. Wine names in the index do NOT include
 // the producer — that lives in the separate winery field.
-function vivinoHit(overrides: Partial<VivinoHit> & { name: string }): VivinoHit {
+function vivinoHit(
+  overrides: Partial<VivinoHit> & { name: string }
+): VivinoHit {
   return {
     id: 1,
     statistics: { ratings_average: 4.0, ratings_count: 100 },
     vintages: [{ id: 9001, statistics: { ratings_count: 100 } }],
     ...overrides
-  };
+  }
 }
 
 function vivinoSearchResponse(hits: VivinoHit[], nbHits?: number): Response {
   return {
-    ok: true,
-    json: () => Promise.resolve({ hits, nbHits: nbHits ?? hits.length })
-  } as Response;
-}
-
-// Routes mocked fetches: true for the Algolia search call, false for the
-// image downloads that follow it.
-function isVivinoSearchUrl(url: string): boolean {
-  return new URL(url).hostname === '9takgwjuxl-dsn.algolia.net';
+    json: () => Promise.resolve({ hits, nbHits: nbHits ?? hits.length }),
+    ok: true
+  } as Response
 }
 
 // Offline tests: even Algolia misses some wines, so a miss must surface an
 // Uncertain result with a working search link — never a dead-end NotFound.
 test.describe('Vivino lookup misses (mocked fetch)', () => {
-  const realFetch = globalThis.fetch;
+  const realFetch = globalThis.fetch
 
   test.afterEach(() => {
-    globalThis.fetch = realFetch;
-  });
+    globalThis.fetch = realFetch
+  })
 
   test('returns Uncertain with a search link when the search has no hits', async () => {
-    globalThis.fetch = (() =>
-      Promise.resolve(vivinoSearchResponse([]))) as typeof fetch;
+    globalThis.fetch = () => Promise.resolve(vivinoSearchResponse([]))
 
-    const result = await fetchRatingFromVivino('Torre do Olivar');
+    const result = await fetchRatingFromVivino('Torre do Olivar')
 
-    expect(result.status).toBe(RatingResultStatus.Uncertain);
+    expect(result.status).toBe(RatingResultStatus.Uncertain)
     expect(result.link).toBe(
       'https://www.vivino.com/search/wines?q=Torre%20do%20Olivar'
-    );
+    )
     // A genuine no-match is definitive and may be cached.
-    expect(result.transient).toBeUndefined();
-  });
+    expect(result.transient).toBeUndefined()
+  })
 
   test('returns Uncertain with a search link when the request fails', async () => {
-    globalThis.fetch = (() =>
-      Promise.reject(new Error('network down'))) as typeof fetch;
+    globalThis.fetch = () => Promise.reject(new Error('network down'))
 
-    const result = await fetchRatingFromVivino('Some Obscure Wine');
+    const result = await fetchRatingFromVivino('Some Obscure Wine')
 
-    expect(result.status).toBe(RatingResultStatus.Uncertain);
-    expect(result.link).toContain('vivino.com/search/wines');
+    expect(result.status).toBe(RatingResultStatus.Uncertain)
+    expect(result.link).toContain('vivino.com/search/wines')
     // Network failures are transient and must not be cached for a day.
-    expect(result.transient).toBe(true);
-  });
+    expect(result.transient).toBe(true)
+  })
 
   test('marks rate-limited responses transient so they are not cached', async () => {
-    globalThis.fetch = (() =>
-      Promise.resolve({ ok: false, status: 429 } as Response)) as typeof fetch;
+    globalThis.fetch = () =>
+      Promise.resolve({ ok: false, status: 429 } as Response)
 
-    const result = await fetchRatingFromVivino('Some Wine');
+    const result = await fetchRatingFromVivino('Some Wine')
 
-    expect(result.status).toBe(RatingResultStatus.Uncertain);
-    expect(result.transient).toBe(true);
-  });
+    expect(result.status).toBe(RatingResultStatus.Uncertain)
+    expect(result.transient).toBe(true)
+  })
 
   // Regression test: vivino.com/wines/{id} resolves by vintage id, not the
   // generic wine id — using wine.id links to an unrelated wine (e.g. the
@@ -123,7 +136,7 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
   // wine-level one, so the link must go to the most-rated vintage (Vivino's
   // "all vintages" entry when present).
   test('links the most-rated vintage, never the generic wine id', async () => {
-    globalThis.fetch = (() =>
+    globalThis.fetch = () =>
       Promise.resolve(
         vivinoSearchResponse([
           vivinoHit({
@@ -136,19 +149,19 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
             winery: { name: 'Black Stallion' }
           })
         ])
-      )) as typeof fetch;
+      )
 
     const result = await fetchRatingFromVivino(
       'Black Stallion Napa Valley Cabernet Sauvignon',
       false
-    );
+    )
 
-    expect(result.status).toBe(RatingResultStatus.Found);
-    expect(result.link).toBe('https://www.vivino.com/wines/173862896');
-  });
+    expect(result.status).toBe(RatingResultStatus.Found)
+    expect(result.link).toBe('https://www.vivino.com/wines/173862896')
+  })
 
   test('falls back to the wine page when a hit has no vintages', async () => {
-    globalThis.fetch = (() =>
+    globalThis.fetch = () =>
       Promise.resolve(
         vivinoSearchResponse([
           vivinoHit({
@@ -158,16 +171,16 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
             winery: { name: 'El Coto' }
           })
         ])
-      )) as typeof fetch;
+      )
 
-    const result = await fetchRatingFromVivino('El Coto Crianza', false);
+    const result = await fetchRatingFromVivino('El Coto Crianza', false)
 
-    expect(result.status).toBe(RatingResultStatus.Found);
-    expect(result.link).toBe('https://www.vivino.com/w/8619');
-  });
+    expect(result.status).toBe(RatingResultStatus.Found)
+    expect(result.link).toBe('https://www.vivino.com/w/8619')
+  })
 
   test('returns ranked alternatives when no Vivino match is confident enough', async () => {
-    globalThis.fetch = (() =>
+    globalThis.fetch = () =>
       Promise.resolve(
         vivinoSearchResponse([
           // Fantasy wines with no winery data: none can be confirmed as the
@@ -198,27 +211,27 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
             vintages: [{ id: 44, statistics: { ratings_count: 80 } }]
           })
         ])
-      )) as typeof fetch;
+      )
 
-    const result = await fetchRatingFromVivino('Torre del Falco Nero 2020');
+    const result = await fetchRatingFromVivino('Torre del Falco Nero 2020')
 
-    expect(result.status).toBe(RatingResultStatus.Uncertain);
-    expect(result.link).toContain('vivino.com/search/wines');
+    expect(result.status).toBe(RatingResultStatus.Uncertain)
+    expect(result.link).toContain('vivino.com/search/wines')
     // Capped at 3, ranked by similarity to the query.
-    expect(result.alternatives).toHaveLength(3);
+    expect(result.alternatives).toHaveLength(3)
     expect(result.alternatives?.[0]).toEqual({
       link: 'https://www.vivino.com/wines/22',
       name: 'Falco Nero Riserva',
       rating: 4.4,
       votes: 300
-    });
-  });
+    })
+  })
 
   test('attaches label thumbnails as data URLs (page CSP blocks hotlinking)', async () => {
-    const fakePng = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
+    const fakePng = new Uint8Array([0x89, 0x50, 0x4e, 0x47])
 
-    globalThis.fetch = ((input: RequestInfo | URL) => {
-      const url = String(input);
+    globalThis.fetch = (input: RequestInfo | URL) => {
+      const url = requestUrl(input)
       if (isVivinoSearchUrl(url)) {
         return Promise.resolve(
           vivinoSearchResponse([
@@ -233,31 +246,31 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
               winery: { name: 'Black Stallion' }
             })
           ])
-        );
+        )
       }
       // Image request — must be the https-normalized thumbnail URL.
-      expect(url).toBe('https://images.vivino.com/thumbs/fake_150x200.png');
+      expect(url).toBe('https://images.vivino.com/thumbs/fake_150x200.png')
       return Promise.resolve({
         arrayBuffer: () => Promise.resolve(fakePng.buffer),
         headers: new Headers({ 'content-type': 'image/png' }),
         ok: true
-      } as unknown as Response);
-    }) as typeof fetch;
+      } as unknown as Response)
+    }
 
     const result = await fetchRatingFromVivino(
       'Black Stallion Napa Valley Cabernet Sauvignon'
-    );
+    )
 
-    expect(result.status).toBe(RatingResultStatus.Found);
+    expect(result.status).toBe(RatingResultStatus.Found)
     expect(result.imageDataUrl).toBe(
       `data:image/png;base64,${Buffer.from(fakePng).toString('base64')}`
-    );
-  });
+    )
+  })
 
   test('attaches thumbnails to alternatives when the match is uncertain', async () => {
-    const fakePng = new Uint8Array([1, 2, 3]);
-    globalThis.fetch = ((input: RequestInfo | URL) => {
-      const url = String(input);
+    const fakePng = new Uint8Array([1, 2, 3])
+    globalThis.fetch = (input: RequestInfo | URL) => {
+      const url = requestUrl(input)
       if (isVivinoSearchUrl(url)) {
         return Promise.resolve(
           vivinoSearchResponse([
@@ -273,26 +286,28 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
               winery: { name: 'Somebody Else' }
             })
           ])
-        );
+        )
       }
       return Promise.resolve({
         arrayBuffer: () => Promise.resolve(fakePng.buffer),
         headers: new Headers({ 'content-type': 'image/png' }),
         ok: true
-      } as unknown as Response);
-    }) as typeof fetch;
+      } as unknown as Response)
+    }
 
-    const result = await fetchRatingFromVivino('Zzz Qqq 1999');
+    const result = await fetchRatingFromVivino('Zzz Qqq 1999')
 
-    expect(result.status).toBe(RatingResultStatus.Uncertain);
-    expect(result.alternatives).toHaveLength(1);
-    expect(result.alternatives?.[0].imageDataUrl).toMatch(/^data:image\/png;base64,/);
-  });
+    expect(result.status).toBe(RatingResultStatus.Uncertain)
+    expect(result.alternatives).toHaveLength(1)
+    expect(result.alternatives?.[0].imageDataUrl).toMatch(
+      /^data:image\/png;base64,/
+    )
+  })
 
   test('skips thumbnail downloads when includeImage is false (list pages)', async () => {
-    const imageRequests: string[] = [];
-    globalThis.fetch = ((input: RequestInfo | URL) => {
-      const url = String(input);
+    const imageRequests: string[] = []
+    globalThis.fetch = (input: RequestInfo | URL) => {
+      const url = requestUrl(input)
       if (isVivinoSearchUrl(url)) {
         return Promise.resolve(
           vivinoSearchResponse([
@@ -307,29 +322,29 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
               winery: { name: 'Black Stallion' }
             })
           ])
-        );
+        )
       }
-      imageRequests.push(url);
-      return Promise.reject(new Error('unexpected image fetch'));
-    }) as typeof fetch;
+      imageRequests.push(url)
+      return Promise.reject(new Error('unexpected image fetch'))
+    }
 
     const result = await fetchRatingFromVivino(
       'Black Stallion Napa Valley Cabernet Sauvignon',
       false
-    );
+    )
 
-    expect(result.status).toBe(RatingResultStatus.Found);
-    expect(result.imageDataUrl).toBeUndefined();
-    expect(imageRequests).toHaveLength(0);
+    expect(result.status).toBe(RatingResultStatus.Found)
+    expect(result.imageDataUrl).toBeUndefined()
+    expect(imageRequests).toHaveLength(0)
     // Internal scoring fields must not leak into the response/cache.
-    expect(result).not.toHaveProperty('similarityRate');
-    expect(result).not.toHaveProperty('wineNameSimilarityRate');
-    expect(result).not.toHaveProperty('imageUrl');
-    expect(result).not.toHaveProperty('winery');
-  });
+    expect(result).not.toHaveProperty('similarityRate')
+    expect(result).not.toHaveProperty('wineNameSimilarityRate')
+    expect(result).not.toHaveProperty('imageUrl')
+    expect(result).not.toHaveProperty('winery')
+  })
 
   test('ignores hidden hits', async () => {
-    globalThis.fetch = (() =>
+    globalThis.fetch = () =>
       Promise.resolve(
         vivinoSearchResponse([
           vivinoHit({
@@ -338,13 +353,13 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
             winery: { name: 'Barefoot' }
           })
         ])
-      )) as typeof fetch;
+      )
 
-    const result = await fetchRatingFromVivino('Barefoot Brut Cuvée', false);
+    const result = await fetchRatingFromVivino('Barefoot Brut Cuvée', false)
 
-    expect(result.status).toBe(RatingResultStatus.Uncertain);
-    expect(result.alternatives).toBeUndefined();
-  });
+    expect(result.status).toBe(RatingResultStatus.Uncertain)
+    expect(result.alternatives).toBeUndefined()
+  })
 
   // Regression: a wine that isn't on Vivino returns same-style,
   // different-producer candidates. Shared style words ("Prosecco Extra Dry",
@@ -354,12 +369,7 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
   //   Casteloro …  -> Alberto Nani Organic Prosecco Extra Dry
   //   Noria …      -> Fleury Blanc de Noirs Brut Champagne
   //   El Mar …     -> Mas Fi Cava Brut
-  for (const {
-    alt,
-    query,
-    winery,
-    wineName
-  } of [
+  for (const { alt, query, wineName, winery } of [
     {
       alt: 'Alberto Nani Organic Prosecco Extra Dry',
       query: 'Casteloro Prosecco Organic Extra Dry',
@@ -386,7 +396,7 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
     }
   ]) {
     test(`is Uncertain when only style words match, not the producer (${winery})`, async () => {
-      globalThis.fetch = (() =>
+      globalThis.fetch = () =>
         Promise.resolve(
           vivinoSearchResponse([
             vivinoHit({
@@ -397,20 +407,20 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
               winery: { name: winery }
             })
           ])
-        )) as typeof fetch;
+        )
 
-      const result = await fetchRatingFromVivino(query, false);
+      const result = await fetchRatingFromVivino(query, false)
 
-      expect(result.status).toBe(RatingResultStatus.Uncertain);
-      expect(result.link).toContain('vivino.com/search/wines');
+      expect(result.status).toBe(RatingResultStatus.Uncertain)
+      expect(result.link).toContain('vivino.com/search/wines')
       // The wrong wine is still offered as a "did you mean" suggestion,
       // displayed with its producer.
-      expect(result.alternatives?.[0].name).toBe(alt);
-    });
+      expect(result.alternatives?.[0].name).toBe(alt)
+    })
   }
 
   test('stays Found when the winery is confirmed by the query', async () => {
-    globalThis.fetch = (() =>
+    globalThis.fetch = () =>
       Promise.resolve(
         vivinoSearchResponse([
           vivinoHit({
@@ -421,19 +431,19 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
             winery: { name: 'Barefoot' }
           })
         ])
-      )) as typeof fetch;
+      )
 
-    const result = await fetchRatingFromVivino('Barefoot Brut Cuvée', false);
+    const result = await fetchRatingFromVivino('Barefoot Brut Cuvée', false)
 
-    expect(result.status).toBe(RatingResultStatus.Found);
-    expect(result.link).toBe('https://www.vivino.com/wines/550');
-  });
+    expect(result.status).toBe(RatingResultStatus.Found)
+    expect(result.link).toBe('https://www.vivino.com/wines/550')
+  })
 
   // Regression: an any-token winery check would accept "Knight Black Horse"
   // for "Black Knight" (two shared tokens, different producer). Every
   // distinctive winery token must appear in the query.
   test('rejects a winery that only partially overlaps the query', async () => {
-    globalThis.fetch = (() =>
+    globalThis.fetch = () =>
       Promise.resolve(
         vivinoSearchResponse([
           vivinoHit({
@@ -441,15 +451,15 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
             winery: { name: 'Knight Black Horse' }
           })
         ])
-      )) as typeof fetch;
+      )
 
     const result = await fetchRatingFromVivino(
       'Black Knight Cabernet Sauvignon',
       false
-    );
+    )
 
-    expect(result.status).toBe(RatingResultStatus.Uncertain);
-  });
+    expect(result.status).toBe(RatingResultStatus.Uncertain)
+  })
 
   // A hit with no winery data can still be accepted when the name alone is
   // exactly the query — but only exactly. A similarity threshold is not
@@ -457,34 +467,34 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
   // scores 0.97 against "R Riesling Organic" yet is a different producer's
   // wine.
   test('accepts a winery-less hit only on an exact name', async () => {
-    globalThis.fetch = (() =>
+    globalThis.fetch = () =>
       Promise.resolve(
         vivinoSearchResponse([
           vivinoHit({ name: 'Black Knight Cabernet Sauvignon' })
         ])
-      )) as typeof fetch;
+      )
 
     const exact = await fetchRatingFromVivino(
       'Black Knight Cabernet Sauvignon',
       false
-    );
-    expect(exact.status).toBe(RatingResultStatus.Found);
+    )
+    expect(exact.status).toBe(RatingResultStatus.Found)
 
-    globalThis.fetch = (() =>
+    globalThis.fetch = () =>
       Promise.resolve(
         vivinoSearchResponse([vivinoHit({ name: 'Riesling Organic' })])
-      )) as typeof fetch;
+      )
 
-    const close = await fetchRatingFromVivino('R Riesling Organic', false);
-    expect(close.status).toBe(RatingResultStatus.Uncertain);
-  });
+    const close = await fetchRatingFromVivino('R Riesling Organic', false)
+    expect(close.status).toBe(RatingResultStatus.Uncertain)
+  })
 
   // Regression: the confirmed producer must win even when a same-style wine
   // from another producer has the higher name-similarity. Gating only the
   // top-ranked candidate turned "Mionetto Prosecco Brut" into an Uncertain
   // because Masottina's prosecco outscored Mionetto's own.
   test('prefers a confirmed producer over a better-scoring namesake style', async () => {
-    globalThis.fetch = (() =>
+    globalThis.fetch = () =>
       Promise.resolve(
         vivinoSearchResponse([
           vivinoHit({
@@ -501,22 +511,22 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
             winery: { name: 'Mionetto' }
           })
         ])
-      )) as typeof fetch;
+      )
 
-    const result = await fetchRatingFromVivino('Mionetto Prosecco Brut', false);
+    const result = await fetchRatingFromVivino('Mionetto Prosecco Brut', false)
 
-    expect(result.status).toBe(RatingResultStatus.Found);
+    expect(result.status).toBe(RatingResultStatus.Found)
     expect(result.name).toBe(
       'Mionetto Prestige Collection Brut Prosecco Treviso'
-    );
-    expect(result.link).toBe('https://www.vivino.com/wines/222');
-  });
+    )
+    expect(result.link).toBe('https://www.vivino.com/wines/222')
+  })
 
   // Regression: "Château"/"Bodegas"/"Weingut" are corporate-form words, not
   // brands. They are skipped when confirming the winery, so the remaining
   // token ("Pajzos") decides — and it is not in this query.
   test('does not confirm a winery on a shared corporate-form word', async () => {
-    globalThis.fetch = (() =>
+    globalThis.fetch = () =>
       Promise.resolve(
         vivinoSearchResponse([
           vivinoHit({
@@ -525,22 +535,22 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
             winery: { name: 'Château Pajzos' }
           })
         ])
-      )) as typeof fetch;
+      )
 
     const result = await fetchRatingFromVivino(
       'Château Dereszla Tokaji Aszù 5 Puttonyos',
       false
-    );
+    )
 
-    expect(result.status).toBe(RatingResultStatus.Uncertain);
-  });
+    expect(result.status).toBe(RatingResultStatus.Uncertain)
+  })
 
   // Products whose Systembolaget title omits the producer ("Barbera d'Alba
   // Busije" is by Giacosa Fratelli) can only match on the name itself. An
   // exact name on a distinctive title (few index-wide hits) is accepted, and
   // the comparison must tolerate Vivino's typographic apostrophes.
   test('accepts an exact distinctive name even when the producer is not in the title', async () => {
-    globalThis.fetch = (() =>
+    globalThis.fetch = () =>
       Promise.resolve(
         vivinoSearchResponse(
           [
@@ -552,20 +562,20 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
           ],
           2
         )
-      )) as typeof fetch;
+      )
 
-    const result = await fetchRatingFromVivino("Barbera d'Alba Busije", false);
+    const result = await fetchRatingFromVivino("Barbera d'Alba Busije", false)
 
-    expect(result.status).toBe(RatingResultStatus.Found);
-    expect(result.name).toBe('Giacosa Fratelli Barbera d’Alba Busije');
-  });
+    expect(result.status).toBe(RatingResultStatus.Found)
+    expect(result.name).toBe('Giacosa Fratelli Barbera d’Alba Busije')
+  })
 
   // Regression: an exact name on a GENERIC title is no proof of identity —
   // "Piemonte Barbera" exists verbatim under several producers (1714 index
   // hits), and Systembolaget's is not the one Vivino ranks first. Stays
   // Uncertain, with the namesake as a suggestion.
   test('stays Uncertain on an exact name that is common in the index', async () => {
-    globalThis.fetch = (() =>
+    globalThis.fetch = () =>
       Promise.resolve(
         vivinoSearchResponse(
           [
@@ -576,20 +586,20 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
           ],
           1714
         )
-      )) as typeof fetch;
+      )
 
-    const result = await fetchRatingFromVivino('Piemonte Barbera', false);
+    const result = await fetchRatingFromVivino('Piemonte Barbera', false)
 
-    expect(result.status).toBe(RatingResultStatus.Uncertain);
+    expect(result.status).toBe(RatingResultStatus.Uncertain)
     expect(result.alternatives?.[0].name).toBe(
       'Marco Pontarelli Piemonte Barbera'
-    );
-  });
+    )
+  })
 
   // Same producer, several cuvées: the wine whose name actually matches must
   // win, not whichever the search ranks first.
   test('picks the matching cuvée among same-producer hits', async () => {
-    globalThis.fetch = (() =>
+    globalThis.fetch = () =>
       Promise.resolve(
         vivinoSearchResponse([
           vivinoHit({
@@ -607,47 +617,50 @@ test.describe('Vivino lookup misses (mocked fetch)', () => {
             winery: { name: 'El Coto' }
           })
         ])
-      )) as typeof fetch;
+      )
 
-    const result = await fetchRatingFromVivino('El Coto Crianza', false);
+    const result = await fetchRatingFromVivino('El Coto Crianza', false)
 
-    expect(result.status).toBe(RatingResultStatus.Found);
-    expect(result.name).toBe('El Coto Crianza');
-    expect(result.link).toBe('https://www.vivino.com/wines/222');
-  });
+    expect(result.status).toBe(RatingResultStatus.Found)
+    expect(result.name).toBe('El Coto Crianza')
+    expect(result.link).toBe('https://www.vivino.com/wines/222')
+  })
 
   test('returns no alternatives when the search has no hits', async () => {
-    globalThis.fetch = (() =>
-      Promise.resolve(vivinoSearchResponse([]))) as typeof fetch;
+    globalThis.fetch = () => Promise.resolve(vivinoSearchResponse([]))
 
-    const result = await fetchRatingFromVivino('Torre do Olivar');
+    const result = await fetchRatingFromVivino('Torre do Olivar')
 
-    expect(result.status).toBe(RatingResultStatus.Uncertain);
-    expect(result.alternatives).toBeUndefined();
-  });
-});
+    expect(result.status).toBe(RatingResultStatus.Uncertain)
+    expect(result.alternatives).toBeUndefined()
+  })
+})
 
 test.describe('Untappd lookup misses (mocked fetch)', () => {
-  const realFetch = globalThis.fetch;
+  const realFetch = globalThis.fetch
 
   test.afterEach(() => {
-    globalThis.fetch = realFetch;
-  });
+    globalThis.fetch = realFetch
+  })
 
   test('returns ranked alternatives when no Untappd match is confident enough', async () => {
-    const untappdHit = (bid: number, name: string, rating: number, votes: number) => ({
+    const untappdHit = (
+      bid: number,
+      name: string,
+      rating: number,
+      votes: number
+    ) => ({
       beer_name: name,
-      beer_slug: `slug-${bid}`,
+      beer_slug: `slug-${bid.toString()}`,
       bid,
       brewery_beer_name: `Brygghus ${name}`,
       brewery_name: 'Brygghus',
       rating_count: votes,
       rating_score: rating
-    });
+    })
 
-    globalThis.fetch = (() =>
+    globalThis.fetch = () =>
       Promise.resolve({
-        ok: true,
         json: () =>
           Promise.resolve({
             hits: [
@@ -659,17 +672,16 @@ test.describe('Untappd lookup misses (mocked fetch)', () => {
               untappdHit(3, 'Pilsner Urquell', 3.5, 90),
               untappdHit(4, 'Citra Hazy Juice', 3.1, 10)
             ]
-          })
-      } as Response)) as typeof fetch;
+          }),
+        ok: true
+      } as Response)
 
-    const result = await fetchRatingFromUntappd('Mystery Brew IPA');
+    const result = await fetchRatingFromUntappd('Mystery Brew IPA')
 
-    expect(result.status).toBe(RatingResultStatus.Uncertain);
-    expect(result.link).toContain('untappd.com/search');
-    expect(result.alternatives).toHaveLength(3);
-    expect(result.alternatives?.[0].name).toBe('Sommarlager');
-    expect(result.alternatives?.[0].link).toBe(
-      'https://untappd.com/b/slug-2/2'
-    );
-  });
-});
+    expect(result.status).toBe(RatingResultStatus.Uncertain)
+    expect(result.link).toContain('untappd.com/search')
+    expect(result.alternatives).toHaveLength(3)
+    expect(result.alternatives?.[0].name).toBe('Sommarlager')
+    expect(result.alternatives?.[0].link).toBe('https://untappd.com/b/slug-2/2')
+  })
+})
