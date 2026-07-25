@@ -5,8 +5,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Overview
 
 Bolaget+ is a cross-browser (Chrome + Firefox) WebExtension that injects Vivino
-(wine) and Untappd (beer) ratings directly onto product pages of
-Systembolaget.se, Sweden's alcohol retailer. Built with the
+(wine) and Untappd (beer/cider) ratings directly onto product pages and
+list-page cards of Systembolaget.se, Sweden's alcohol retailer. Built with the
 [WXT](https://wxt.dev) framework; TypeScript throughout.
 
 ## Commands
@@ -20,26 +20,28 @@ pnpm dev:chrome        # run in Chrome with HMR (dev server on :3000)
 pnpm dev:firefox       # run in Firefox
 
 pnpm compile           # tsc --noEmit — type check
-pnpm lint              # eslint (strictTypeChecked + stylistic + perfectionist)
+pnpm lint              # eslint . (strictTypeChecked + stylistic + perfectionist)
 pnpm lint:fix
-pnpm ft                # prettier --write on src
+pnpm ft                # prettier --write on src, e2e, and root *.config.ts
 pnpm ft:check          # prettier --check (CI uses this)
 
 pnpm build:chrome      # build to .output/ (build:firefox for MV2/Firefox)
 pnpm zip:chrome        # package for store submission
 
+pnpm test:unit         # vitest unit tests (src/**/*.test.ts) — fast, no network
 pnpm test              # build:chrome then run full Playwright suite
 pnpm test:interactive  # playwright --ui
 pnpm test:api          # only the Vivino/Untappd API-integration spec
 ```
 
-Run a single test: `pnpm build:chrome && playwright test -g "beer page"`
+Run a single Playwright test: `pnpm build:chrome && playwright test -g "beer page"`
 (the build step is required — Playwright loads the built extension from
 `.output/`).
 
-CI (`.github/workflows/pr.yaml`) runs `compile`, `ft:check`, `lint`, and
-`build:chrome` on every PR. The `pre-push` git hook (simple-git-hooks) runs
-`ft` + `lint` — installed automatically on `pnpm install`.
+CI (`.github/workflows/pr.yaml`) runs `compile`, `ft:check`, `lint`,
+`test:unit`, and `build:chrome` on every PR. The `pre-push` git hook
+(simple-git-hooks) runs `ft` + `lint` — installed automatically on
+`pnpm install`.
 
 ## Architecture
 
@@ -54,35 +56,49 @@ external fetches are delegated to the background script.
 1. `content.ts` runs on `*.systembolaget.se/*`. It uses
    [sentinel-js](https://github.com/geoxor/sentinel-js) to watch for the `h1`
    element (Systembolaget is an SPA, so pages swap without full reloads) and
-   triggers `tryInsertOnProductPage` on each new product title.
-2. `productUtils.ts` derives `ProductType` from the URL path (`/produkt/vin/`
-   vs `/produkt/ol/`), extracts the product name from the `<h1>`, and gates
-   wine on `isBottle()` (Vivino only rates bottles, not box/bag-in-box/etc. —
-   see the exclusion-list note in that file).
+   triggers `tryInsertOnProductPage` on each new product title. It also
+   watches list-page product cards (`a[id^="tile:"]`) and, once a card
+   scrolls into view, injects a compact rating badge via a throttled fetch
+   queue (`enqueueListFetch`, one request per 300 ms — cached ratings skip
+   the queue and render immediately).
+2. `productUtils.ts` derives `ProductType` from the URL path (`/produkt/vin/`,
+   `/produkt/ol/`, `/produkt/cider-blanddrycker/`), extracts the product name
+   from the `<h1>` (or from a card's text lines), and gates wine on
+   `isBottle()` (Vivino only rates bottles, not box/bag-in-box/etc. — see the
+   exclusion-list note in that file).
 3. `ratingService.fetchRating` checks the local cache first
    (`ratingsCache.ts`), otherwise sends a `RatingRequest` message to the
-   background script and caches non-`NotFound` responses.
-4. `background.ts` receives the message and calls `api.ts` —
-   `fetchRatingFromVivino` (Vivino explore JSON API, with an HTML search-page
-   fallback) or `fetchRatingFromUntappd` (scrapes Untappd search + detail HTML
-   via cheerio).
-5. `api.ts` scores candidates with `string-similarity`. Below the similarity
-   threshold it returns `RatingResultStatus.Uncertain` (renders a "check
-   manually" link) rather than a wrong rating; no candidate returns `NotFound`.
+   background script and caches responses that are neither `NotFound` nor
+   `transient` (transient = rate limit / network failure; retried next visit).
+4. `background.ts` receives the message and calls `api.ts`. Both lookups use
+   the sites' public Algolia search indexes (search-only credentials shipped
+   to anonymous visitors): `fetchRatingFromVivino` queries the `WINES_prod`
+   index, `fetchRatingFromUntappd` the `beer` index. Wine label thumbnails
+   are downloaded by the background script and inlined as `data:` URLs
+   because the page CSP blocks hotlinking Vivino's image hosts.
+5. `api.ts` scores candidates with `string-similarity`. A Vivino match must
+   additionally be confirmed by the producer (`queryContainsWinery`) or be an
+   exact name hit on a distinctive title — see the comments in that file for
+   the regressions each rule guards. Unconfirmed candidates return
+   `RatingResultStatus.Uncertain` with up to 3 ranked alternatives and a
+   search link rather than a wrong rating; an empty Untappd result returns
+   `NotFound`.
 6. Back in `content.ts`, `handleRating` dispatches on `RatingResultStatus` and
    `domUtils.ts` renders the rating card (`#rating-container`) into the page.
 
 **Popup** (`entrypoints/popup/`) is a plain HTML/TS toggle UI backed by the
-three `sync:`-scoped storage items in `settings.ts` (`featuresEnabled`,
-`wineFeatureEnabled`, `beerFeatureEnabled`, all default `true`). The content
-script reads these before doing any work.
+four `sync:`-scoped storage items in `settings.ts` (`featuresEnabled`,
+`wineFeatureEnabled`, `beerFeatureEnabled`, `ciderFeatureEnabled`, all default
+`true`). The content script reads these before doing any work.
 
 **Shared types** live in `src/@types/types.ts` — `ProductType` and
 `RatingResultStatus` enums plus the `RatingRequest`/`RatingResponse` message
 contract used across the process boundary.
 
 **Caching** (`ratingsCache.ts`) uses `@wxt-dev/storage` with `local:` keys and
-per-item metadata timestamps; entries expire after 1 day.
+per-item metadata timestamps; entries expire after 1 day. Reads evict their
+own expired entry; `removeExpiredRatings` (run on background startup) sweeps
+the rest so cached label images can't accumulate toward the storage quota.
 
 **i18n**: user-facing strings come from `src/locales/{sv,en}.yml` via
 `@wxt-dev/i18n`; default locale is Swedish (`sv`). Use `i18n.t('key')`, not
@@ -100,9 +116,16 @@ hardcoded strings.
 
 ## Testing notes
 
-Playwright tests in `e2e/` load the built extension against the **live**
-Systembolaget, Vivino, and Untappd sites (no mocking), so they depend on those
-pages' current markup and can be flaky — CI retries twice and runs serially.
-`fixtures.ts` provides the `extensionId` fixture. The `end-to-end.spec.ts`
+Unit tests (`src/**/*.test.ts`, vitest with WXT's `WxtVitest` plugin) cover
+the matching logic in `api.ts` against fixture Algolia responses and the cache
+against `fakeBrowser` storage — run them with `pnpm test:unit`; they need no
+network and are the first thing to extend when touching matching rules.
+
+Playwright tests in `e2e/` load the built extension. `end-to-end.spec.ts`
+runs against the **live** Systembolaget site, so it depends on that page's
+current markup and can be flaky — CI retries twice and runs serially; the
 tests must dismiss Systembolaget's age gate ("Jag har fyllt 20 år") and cookie
 banner ("Acceptera alla kakor") before asserting on `#rating-container`.
+`api-integration.spec.ts` mixes a few live Vivino/Untappd queries with
+mocked-`fetch` regression tests for the matching rules. `fixtures.ts`
+provides the `extensionId` fixture.
