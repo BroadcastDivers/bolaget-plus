@@ -30,7 +30,10 @@ jobs:
         
       - name: Lint code
         run: pnpm lint
-        
+
+      - name: Unit tests
+        run: pnpm test:unit
+
       - name: Build project
         run: pnpm build:chrome
  
