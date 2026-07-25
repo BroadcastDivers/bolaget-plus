@@ -4,7 +4,14 @@ import perfectionist from 'eslint-plugin-perfectionist';
 
 export default tseslint.config(
   {
-    ignores: ['**/*.js'],
+    ignores: [
+      '**/*.js',
+      '**/*.mjs',
+      '.output/**',
+      '.wxt/**',
+      'playwright-report/**',
+      'test-results/**',
+    ],
   },
   eslint.configs.recommended,
   tseslint.configs.strictTypeChecked,
