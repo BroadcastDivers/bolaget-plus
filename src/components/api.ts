@@ -141,6 +141,14 @@ export async function fetchRatingFromUntappd(
   const searchFallbackUrl = `https://untappd.com/search?q=${encodeURIComponent(
     productName
   )}&type=beer&sort=all`
+  // HTTP errors (429 rate limit, 5xx) and network failures are transient —
+  // hand the user a search link instead of a definitive "no match", and mark
+  // the response so it never gets cached as a miss for a day.
+  const transientFallback = {
+    link: searchFallbackUrl,
+    status: RatingResultStatus.Uncertain,
+    transient: true
+  } as RatingResponse
 
   try {
     const response = await fetch(url, {
@@ -159,7 +167,7 @@ export async function fetchRatingFromUntappd(
     })
 
     if (!response.ok) {
-      return { status: RatingResultStatus.NotFound } as RatingResponse
+      return transientFallback
     }
 
     const data = (await response.json()) as UntappdSearchJSON
@@ -212,7 +220,7 @@ export async function fetchRatingFromUntappd(
       votes: bestMatch.votes
     } as BeerResponse
   } catch {
-    return { status: RatingResultStatus.NotFound } as RatingResponse
+    return transientFallback
   }
 }
 
