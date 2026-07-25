@@ -1,4 +1,5 @@
-import { getLatestRelease, version } from '@/components/github'
+import browser from 'webextension-polyfill'
+
 import {
   beerFeatureEnabled,
   ciderFeatureEnabled,
@@ -6,18 +7,8 @@ import {
   wineFeatureEnabled
 } from '@/components/settings'
 
-async function checkForUpdate(
-  installUpdateButton: HTMLButtonElement
-): Promise<void> {
-  const release = await getLatestRelease()
-  const latest = release?.tag_name.replace(/^v/, '')
-  if (release && latest !== version) {
-    installUpdateButton.disabled = false
-    installUpdateButton.addEventListener('click', () => {
-      window.open(release.html_url, '_blank')
-    })
-  }
-}
+// Sourced from the manifest, which WXT generates from package.json's version.
+const version = browser.runtime.getManifest().version
 
 async function initialize(): Promise<void> {
   showVersion()
@@ -28,13 +19,6 @@ async function initialize(): Promise<void> {
     shareButton.addEventListener('click', () => {
       void shareExtension()
     })
-  }
-
-  const installUpdateButton = document.getElementById(
-    'updateButton'
-  ) as HTMLButtonElement | null
-  if (installUpdateButton) {
-    await checkForUpdate(installUpdateButton)
   }
 }
 
