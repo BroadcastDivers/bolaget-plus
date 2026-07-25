@@ -1,12 +1,36 @@
 import { ProductType } from '@/@types/types'
 
+// The category line shown above the product name on list cards
+// ("Vitt vin, Friskt & fruktigt", "Öl, Ljus lager, …") — it must not leak
+// into the search query sent to Vivino/Untappd.
+const CATEGORY_LINE =
+  /^(blanddryck|cider|mousserande|rosé|rött vin|vin|vitt vin|öl)[^,]*,/i
+
 export function getCardName(card: Element): null | string {
-  const spans = [...card.querySelectorAll('.monopol-250')] as HTMLElement[]
-  if (spans.length === 0) return null
-  const parts = spans.map((s) => s.innerText.trim()).filter(Boolean)
+  const productId = getCardProductId(card)
+  if (!productId) return null
+
+  // Anchor on the "Nr {productId}" line every card renders; the name and
+  // subtitle/vintage are the lines directly above it. Systembolaget's class
+  // names are hashed build artifacts (monopol-*, css-*) and reshuffle
+  // between deploys, so text structure is the only stable thing to hold on to.
+  const lines = (card as HTMLElement).innerText
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+  const nrPattern = new RegExp(`^Nr\\s*${productId}$`)
+  const nrIndex = lines.findIndex((line) => nrPattern.test(line))
+  if (nrIndex <= 0) return null
+
+  let titleLines = lines.slice(Math.max(0, nrIndex - 2), nrIndex)
+  if (titleLines.length > 1 && CATEGORY_LINE.test(titleLines[0])) {
+    titleLines = titleLines.slice(1)
+  }
+  if (titleLines.some((line) => CATEGORY_LINE.test(line))) return null
+
   // Normalize ", 2025" → " 2025" so vintage year is included without comma
   return (
-    parts
+    titleLines
       .join(' ')
       .replace(/,\s*(\d{4})/, ' $1')
       .trim() || null

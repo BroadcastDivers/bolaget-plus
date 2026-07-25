@@ -440,27 +440,32 @@ function generateCapSvg(rating: number): string {
 
 const CARD_RATING_CLASS = 'bp-card-rating'
 
-export function injectCardSpinner(card: Element): HTMLElement | null {
+export function injectCardSpinner(
+  card: Element,
+  productId: string
+): HTMLElement | null {
   if (card.querySelector(`.${CARD_RATING_CLASS}, .bp-card-spinner-inline`)) {
     return null
   }
   ensureStyles()
-  const lastNameSpan = [...card.querySelectorAll('.monopol-250')].at(-1)
-  if (!lastNameSpan) return null
+  const anchor = findCardAnchor(card, productId)
+  if (!anchor) return null
 
   const spinner = document.createElement('div')
   spinner.className = 'bp-card-spinner-inline'
-  lastNameSpan.insertAdjacentElement('afterend', spinner)
+  anchor.insertAdjacentElement('afterend', spinner)
   return spinner
 }
 
 export function replaceCardSpinner(
+  card: Element,
   spinner: HTMLElement,
+  productId: string,
   productType: ProductType,
   rating: RatingResponse
 ): void {
+  spinner.remove()
   if (rating.status !== RatingResultStatus.Found) {
-    spinner.remove()
     return
   }
   const svg =
@@ -474,7 +479,37 @@ export function replaceCardSpinner(
     <span class="bp-card-score">${rating.rating.toString()}</span>
     <span class="bp-card-votes">(${rating.votes.toString()})</span>
   `
-  spinner.replaceWith(badge)
+  // The SPA may have re-rendered the card's contents while the rating request
+  // was in flight, detaching the spinner — so re-resolve the anchor instead of
+  // replacing a node that may no longer be in the card.
+  if (card.querySelector(`.${CARD_RATING_CLASS}`)) return
+  findCardAnchor(card, productId)?.insertAdjacentElement('afterend', badge)
+}
+
+// Finds the element rendering the "Nr {productId}" line on a list card.
+// Systembolaget's class names are hashed build artifacts that reshuffle
+// between deploys, so the product-number text is the only stable anchor.
+function findCardAnchor(card: Element, productId: string): Element | null {
+  const nrPattern = new RegExp(`^Nr\\s*${productId}$`)
+  const matchesNr = (el: Element) =>
+    nrPattern.test(el.textContent.replace(/\s+/g, ' ').trim())
+
+  let anchor: Element | null = null
+  for (const el of card.querySelectorAll('*')) {
+    if (matchesNr(el)) anchor = el
+  }
+  if (!anchor) return null
+
+  // Climb to the outermost element that renders only the "Nr …" line, so the
+  // badge is inserted as a sibling block below it rather than inside it.
+  while (
+    anchor.parentElement &&
+    anchor.parentElement !== card &&
+    matchesNr(anchor.parentElement)
+  ) {
+    anchor = anchor.parentElement
+  }
+  return anchor
 }
 
 function generateStarsSvg(rating: number): string {
