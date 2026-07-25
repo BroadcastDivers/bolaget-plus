@@ -151,3 +151,37 @@ test('visiting wine list page shows rating badges on product cards', async ({
   await page.waitForSelector('.bp-card-rating', { timeout: 20000 })
   await expect(page.locator('.bp-card-rating').first()).toBeVisible()
 })
+
+test('scrolling to the pager on a list page stacks the next page', async ({
+  page,
+  extensionId
+}) => {
+  // arrange
+  await page.goto(`chrome-extension://${extensionId}/popup.html`)
+  await page.waitForSelector('.settings')
+  await expect(page.locator('#enabled')).toBeChecked()
+  await expect(page.locator('#infiniteScroll')).toBeChecked()
+
+  await page.goto('https://www.systembolaget.se/sortiment/vin/')
+  await page.getByRole('link', { name: 'Jag har fyllt 20 år' }).click()
+  await page.getByRole('button', { name: 'Acceptera alla kakor' }).click()
+  await page.reload()
+
+  const cards = page.locator('a[id^="tile:"]')
+  await cards.first().waitFor({ timeout: 20000 })
+  // Let the list finish rendering before counting what page one holds.
+  await page.waitForTimeout(2000)
+  const firstPageCount = await cards.count()
+
+  // act
+  const pager = page.getByText(/^Till sida \d+$/).first()
+  await pager.scrollIntoViewIfNeeded()
+
+  // assert — the next page is appended to the first one instead of replacing it
+  await expect
+    .poll(async () => cards.count(), { timeout: 30000 })
+    .toBeGreaterThan(firstPageCount)
+  await expect(
+    page.locator('[data-bolaget-plus-stacked]').first()
+  ).toBeVisible()
+})

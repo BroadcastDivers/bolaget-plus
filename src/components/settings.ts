@@ -27,3 +27,10 @@ export const ciderFeatureEnabled = storage.defineItem<boolean>(
     fallback: true
   }
 )
+
+export const infiniteScrollEnabled = storage.defineItem<boolean>(
+  'sync:infiniteScrollEnabled',
+  {
+    fallback: true
+  }
+)

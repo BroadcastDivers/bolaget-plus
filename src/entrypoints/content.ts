@@ -6,6 +6,7 @@ import {
   RatingResultStatus
 } from '@/@types/types'
 import * as domUtils from '@/components/domUtils'
+import { startInfiniteScroll } from '@/components/infiniteScroll'
 import * as productUtils from '@/components/productUtils'
 import { enqueueListFetch, fetchRating } from '@/components/ratingService'
 import {
@@ -30,9 +31,10 @@ export default defineContentScript({
     //eslint-disable-next-line @typescript-eslint/no-misused-promises
     sentinel.on('h1', tryInsertOnProductPage)
     void tryInsertOnProductPage()
-    sentinel.on('a[id^="tile:"]', (card) => {
+    sentinel.on(productUtils.CARD_SELECTOR, (card) => {
       listCardObserver.observe(card)
     })
+    startInfiniteScroll()
   },
   matches: ['*://*.systembolaget.se/*']
 })

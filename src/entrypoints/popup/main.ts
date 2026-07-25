@@ -3,6 +3,7 @@ import {
   beerFeatureEnabled,
   ciderFeatureEnabled,
   featuresEnabled,
+  infiniteScrollEnabled,
   wineFeatureEnabled
 } from '@/components/settings'
 
@@ -61,6 +62,14 @@ async function setupToggles(): Promise<void> {
   ciderToggle.checked = await ciderFeatureEnabled.getValue()
   ciderToggle.addEventListener('change', () => {
     void ciderFeatureEnabled.setValue(ciderToggle.checked)
+  })
+
+  const infiniteScrollToggle = document.getElementById(
+    'infiniteScroll'
+  ) as HTMLInputElement
+  infiniteScrollToggle.checked = await infiniteScrollEnabled.getValue()
+  infiniteScrollToggle.addEventListener('change', () => {
+    void infiniteScrollEnabled.setValue(infiniteScrollToggle.checked)
   })
 }
 

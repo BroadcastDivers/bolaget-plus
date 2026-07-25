@@ -72,10 +72,21 @@ external fetches are delegated to the background script.
 6. Back in `content.ts`, `handleRating` dispatches on `RatingResultStatus` and
    `domUtils.ts` renders the rating card (`#rating-container`) into the page.
 
+**Infinite scroll** (`infiniteScroll.ts`) replaces the pagination on
+`/sortiment/` list pages. A throttled scroll handler clicks Systembolaget's
+"Till sida N" button once it nears the viewport; because the SPA swaps the
+cards on screen for the next page's, the outgoing cards are cloned first and
+re-inserted above the new ones from a `MutationObserver` on the card grid (in
+the same microtask, so the swap never paints as a shrinking list). Clones carry
+`data-bolaget-plus-stacked`, which is also how a re-render the extension
+_didn't_ trigger — a filter, a sort, or the reader's own page click — is told
+apart from its own DOM writes and clears the stack.
+
 **Popup** (`entrypoints/popup/`) is a plain HTML/TS toggle UI backed by the
-three `sync:`-scoped storage items in `settings.ts` (`featuresEnabled`,
-`wineFeatureEnabled`, `beerFeatureEnabled`, all default `true`). The content
-script reads these before doing any work.
+`sync:`-scoped storage items in `settings.ts` (`featuresEnabled`,
+`wineFeatureEnabled`, `beerFeatureEnabled`, `ciderFeatureEnabled`,
+`infiniteScrollEnabled`, all default `true`). The content script reads these
+before doing any work.
 
 **Shared types** live in `src/@types/types.ts` — `ProductType` and
 `RatingResultStatus` enums plus the `RatingRequest`/`RatingResponse` message

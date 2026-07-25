@@ -1,5 +1,9 @@
 import { ProductType } from '@/@types/types'
 
+// Product cards on list pages. Systembolaget's class names are hashed build
+// artifacts, but every card is an anchor with a "tile:{productId}" id.
+export const CARD_SELECTOR = 'a[id^="tile:"]'
+
 // The category line shown above the product name on list cards
 // ("Vitt vin, Friskt & fruktigt", "Öl, Ljus lager, …") — it must not leak
 // into the search query sent to Vivino/Untappd.

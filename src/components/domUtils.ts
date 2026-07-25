@@ -524,12 +524,21 @@ function positionZoomPreview(
 }
 
 const CARD_RATING_CLASS = 'bp-card-rating'
+const CARD_SPINNER_CLASS = 'bp-card-spinner-inline'
+
+// Removes a spinner whose rating request can no longer reach it, so the card is
+// treated as unrated again rather than spinning forever.
+export function clearPendingCardSpinner(card: Element): void {
+  for (const spinner of card.querySelectorAll(`.${CARD_SPINNER_CLASS}`)) {
+    spinner.remove()
+  }
+}
 
 export function injectCardSpinner(
   card: Element,
   productId: string
 ): HTMLElement | null {
-  if (card.querySelector(`.${CARD_RATING_CLASS}, .bp-card-spinner-inline`)) {
+  if (card.querySelector(`.${CARD_RATING_CLASS}, .${CARD_SPINNER_CLASS}`)) {
     return null
   }
   ensureStyles()
@@ -537,7 +546,7 @@ export function injectCardSpinner(
   if (!anchor) return null
 
   const spinner = document.createElement('div')
-  spinner.className = 'bp-card-spinner-inline'
+  spinner.className = CARD_SPINNER_CLASS
   anchor.insertAdjacentElement('afterend', spinner)
   return spinner
 }
