@@ -12,6 +12,8 @@ A browser plugin for Systembolaget.se that shows ratings directly at systembolag
 - Wine ratings from [Vivino](https://www.vivino.com/) with direct links to product pages
 - Beer ratings from [Untappd](https://untappd.com/) with direct links to product pages
 - Cider & mixed drink ratings from [Untappd](https://untappd.com/) with direct links to product pages
+- Rating badges on product cards in the assortment list pages
+- Label thumbnails with hover zoom, and "closest match" suggestions when no confident match is found
 - Easy toggling of features through a simple popup interface
 - Works with both Firefox and Chrome browsers
 
@@ -50,7 +52,13 @@ pnpm dev:chrome
 
 ### Testing
 
-Run the tests with:
+Run the unit tests (fast, no network):
+
+```sh
+pnpm test:unit
+```
+
+Run the end-to-end tests (builds the extension, then drives it against the live sites with Playwright):
 
 ```sh
 pnpm test
@@ -61,7 +69,7 @@ pnpm test
 Build the extension locally:
 
 ```sh
-pnpm build
+pnpm build:chrome   # or build:firefox
 ```
 
 The output is located in the `.output` folder.
