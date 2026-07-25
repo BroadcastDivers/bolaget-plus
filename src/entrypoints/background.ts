@@ -16,7 +16,9 @@ import { getSearchConfig } from '@/components/searchConfigCache'
 
 export default defineBackground(() => {
   // The MV3 service worker starts on browser launch and on events, so this
-  // sweep runs often enough to keep expired entries from accumulating.
+  // sweep runs often enough to keep expired entries from accumulating — and it
+  // throttles itself, since reading the whole cache on every restart is not
+  // free.
   void removeExpiredRatings().catch(() => undefined)
 })
 
