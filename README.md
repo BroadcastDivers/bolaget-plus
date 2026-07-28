@@ -61,8 +61,10 @@ pnpm test:unit
 Run the end-to-end tests (builds the extension, then drives it against the live sites with Playwright):
 
 ```sh
-pnpm test
+pnpm test:e2e
 ```
+
+`pnpm test` runs both suites in that order.
 
 ### Building
 

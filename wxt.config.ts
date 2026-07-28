@@ -41,6 +41,8 @@ export default defineConfig({
     },
     permissions: [
       'storage',
+      // Drives the hourly expired-ratings cache sweep.
+      'alarms',
       '*://*.vivino.com/*',
       '*://*.untappd.com/*',
       'clipboardWrite',

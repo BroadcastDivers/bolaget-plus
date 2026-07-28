@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing'
 
 import {
@@ -46,6 +46,7 @@ async function storedKeys(): Promise<string[]> {
 describe('ratingsCache', () => {
   beforeEach(() => {
     fakeBrowser.reset()
+    vi.restoreAllMocks()
   })
 
   it('round-trips a saved rating', async () => {
@@ -119,6 +120,62 @@ describe('ratingsCache', () => {
       'ratings:777-wine$': { datetime: new Date().toISOString() }
     })
 
+    await removeExpiredRatings()
+
+    await expect(storedKeys()).resolves.toEqual([])
+  })
+
+  // saveRating runs in the content script while the sweep runs in the
+  // background, so a scan can start after the value has landed but before its
+  // metadata has. Collecting on that first sighting would throw away a rating
+  // that was in the middle of being written.
+  it('keeps a pair that was merely mid-write when the scan ran', async () => {
+    await saveRating(request, rating)
+
+    // Hide the metadata from the full-store scan only; the targeted re-read
+    // that decides what to collect sees the finished pair, exactly as it would
+    // in the real race.
+    const get = fakeBrowser.storage.local.get.bind(fakeBrowser.storage.local)
+    vi.spyOn(fakeBrowser.storage.local, 'get').mockImplementation(
+      async (keys) => {
+        const items = await get(keys)
+        if (keys !== null) {
+          return items
+        }
+        return Object.fromEntries(
+          Object.entries(items).filter(([key]) => key !== 'ratings:123-wine$')
+        )
+      }
+    )
+
+    await removeExpiredRatings()
+    // storedKeys reads the whole store too, so drop the mock before asserting.
+    vi.restoreAllMocks()
+
+    await expect(storedKeys()).resolves.toEqual([
+      'ratings:123-wine',
+      'ratings:123-wine$'
+    ])
+  })
+
+  // Claiming the interval before doing the work would let a sweep that threw
+  // partway suppress the next attempt for a full hour.
+  it('retries after a sweep that failed instead of claiming the interval', async () => {
+    await saveRating({ ...request, productId: '999' }, rating)
+    await fakeBrowser.storage.local.set({
+      'ratings:999-wine$': { datetime: TWO_DAYS_AGO }
+    })
+
+    vi.spyOn(fakeBrowser.storage.local, 'remove').mockRejectedValueOnce(
+      new Error('storage unavailable')
+    )
+    await expect(removeExpiredRatings()).rejects.toThrow('storage unavailable')
+    await expect(storedKeys()).resolves.toEqual([
+      'ratings:999-wine',
+      'ratings:999-wine$'
+    ])
+
+    // Immediately afterwards — well inside the hour — the sweep runs again.
     await removeExpiredRatings()
 
     await expect(storedKeys()).resolves.toEqual([])

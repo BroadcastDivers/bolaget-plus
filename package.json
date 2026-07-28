@@ -18,10 +18,11 @@
     "ft:check": "prettier --check \"{src,e2e}/**/*.{js,jsx,ts,tsx,json,css,scss,md}\" \"*.config.ts\"",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "test": "pnpm build:chrome && playwright test",
+    "test": "pnpm test:unit && pnpm test:e2e",
+    "test:unit": "vitest run",
+    "test:e2e": "pnpm build:chrome && playwright test",
     "test:interactive": "playwright test --ui",
-    "test:api": "pnpm build:chrome && playwright test e2e/api-integration.spec.ts",
-    "test:unit": "vitest run"
+    "test:api": "pnpm build:chrome && playwright test e2e/api-integration.spec.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

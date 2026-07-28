@@ -141,14 +141,20 @@ export async function fetchRatingFromUntappd(
   const searchFallbackUrl = `https://untappd.com/search?q=${encodeURIComponent(
     productName
   )}&type=beer&sort=all`
+  const uncertainFallback: RatingResponse = {
+    link: searchFallbackUrl,
+    name: null,
+    rating: 0,
+    status: RatingResultStatus.Uncertain,
+    votes: 0
+  }
   // HTTP errors (429 rate limit, 5xx) and network failures are transient —
   // hand the user a search link instead of a definitive "no match", and mark
   // the response so it never gets cached as a miss for a day.
-  const transientFallback = {
-    link: searchFallbackUrl,
-    status: RatingResultStatus.Uncertain,
+  const transientFallback: RatingResponse = {
+    ...uncertainFallback,
     transient: true
-  } as RatingResponse
+  }
 
   try {
     const response = await fetch(url, {
@@ -174,7 +180,13 @@ export async function fetchRatingFromUntappd(
     const hits = data.hits ?? []
 
     if (hits.length === 0) {
-      return { status: RatingResultStatus.NotFound } as RatingResponse
+      return {
+        link: null,
+        name: null,
+        rating: 0,
+        status: RatingResultStatus.NotFound,
+        votes: 0
+      }
     }
 
     type ScoredBeer = BeerResponse & { similarityRate: number }
@@ -203,22 +215,19 @@ export async function fetchRatingFromUntappd(
     const bestMatch = scored[0]
 
     if (bestMatch.similarityRate < 0.2) {
-      return {
-        alternatives: toAlternatives(scored),
-        link: searchFallbackUrl,
-        status: RatingResultStatus.Uncertain
-      } as RatingResponse
+      return { ...uncertainFallback, alternatives: toAlternatives(scored) }
     }
 
     // Return only the response contract — similarityRate is internal.
-    return {
+    const result: BeerResponse = {
       brewery: bestMatch.brewery,
       link: bestMatch.link,
       name: bestMatch.name,
       rating: bestMatch.rating,
       status: bestMatch.status,
       votes: bestMatch.votes
-    } as BeerResponse
+    }
+    return result
   } catch {
     return transientFallback
   }
@@ -232,10 +241,13 @@ export async function fetchRatingFromVivino(
   // Even Algolia misses some wines (obscure producers, new releases). Instead
   // of a dead-end "no rating" message, always hand the user a working Vivino
   // search link.
-  const uncertainFallback = {
+  const uncertainFallback: RatingResponse = {
     link: `https://www.vivino.com/search/wines?q=${encodeURIComponent(query)}`,
-    status: RatingResultStatus.Uncertain
-  } as RatingResponse
+    name: null,
+    rating: 0,
+    status: RatingResultStatus.Uncertain,
+    votes: 0
+  }
 
   try {
     const response = await fetch(url, {

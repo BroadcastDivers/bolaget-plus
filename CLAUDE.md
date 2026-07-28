@@ -28,8 +28,9 @@ pnpm ft:check          # prettier --check (CI uses this)
 pnpm build:chrome      # build to .output/ (build:firefox for MV2/Firefox)
 pnpm zip:chrome        # package for store submission
 
+pnpm test              # test:unit then test:e2e
 pnpm test:unit         # vitest unit tests (src/**/*.test.ts) — fast, no network
-pnpm test              # build:chrome then run full Playwright suite
+pnpm test:e2e          # build:chrome then run full Playwright suite (live sites)
 pnpm test:interactive  # playwright --ui
 pnpm test:api          # only the Vivino/Untappd API-integration spec
 ```
@@ -97,10 +98,12 @@ contract used across the process boundary.
 
 **Caching** (`ratingsCache.ts`) uses `@wxt-dev/storage` with `local:` keys and
 per-item metadata timestamps; entries expire after 1 day. Reads evict their
-own expired entry; `removeExpiredRatings` (run on background startup, throttled
-to once an hour because it reads every cached value) sweeps the rest — expired
-entries, and either half of a torn write — so cached label images can't
-accumulate toward the storage quota.
+own expired entry; `removeExpiredRatings` sweeps the rest — expired entries,
+and either half of a torn write — so cached label images can't accumulate
+toward the storage quota. It runs on background startup and on an hourly
+`browser.alarms` alarm (the alarm matters for the MV2/Firefox build, whose
+persistent background page starts only once per browser session), and
+self-throttles to once an hour so the two triggers can't compound.
 
 **i18n**: user-facing strings come from `src/locales/{sv,en}.yml` via
 `@wxt-dev/i18n`; default locale is Swedish (`sv`). Use `i18n.t('key')`, not

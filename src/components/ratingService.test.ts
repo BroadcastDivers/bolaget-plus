@@ -8,7 +8,10 @@ import {
   RatingResultStatus
 } from '@/@types/types'
 import { saveRating } from '@/components/ratingsCache'
-import { enqueueListFetch } from '@/components/ratingService'
+import {
+  enqueueListFetch,
+  resetListFetchQueue
+} from '@/components/ratingService'
 
 const request: RatingRequest = {
   includeImage: false,
@@ -29,6 +32,9 @@ describe('enqueueListFetch', () => {
   beforeEach(() => {
     fakeBrowser.reset()
     vi.restoreAllMocks()
+    // The queue is module state shared by every test in this file; without
+    // this, a case that leaves a task pending stalls each later case.
+    resetListFetchQueue()
   })
 
   // The throttle exists to pace requests at the two rating sites; a cache hit
@@ -70,5 +76,43 @@ describe('enqueueListFetch', () => {
     expect(sendMessage).toHaveBeenCalledWith(
       expect.objectContaining({ includeImage: false, productId: '456' })
     )
+  })
+
+  // Checking the cache before claiming a queue slot would order the queue by
+  // whichever storage read resolved first, so badges could fill in out of the
+  // order their cards appear on the page.
+  it('queues uncached cards in call order regardless of cache-read timing', async () => {
+    const requested: string[] = []
+    vi.spyOn(fakeBrowser.runtime, 'sendMessage').mockImplementation(
+      (message: unknown) => {
+        requested.push((message as RatingRequest).productId)
+        return Promise.resolve(rating)
+      }
+    )
+
+    // A cached card sits between two uncached ones: it must not consume a
+    // queue slot, and it must not reorder the cards that do.
+    await saveRating({ ...request, productId: 'b' }, rating)
+
+    // Make the first card's cache read the slowest one. Claiming queue slots
+    // only after the read resolves would put 'c' ahead of 'a'.
+    const get = fakeBrowser.storage.local.get.bind(fakeBrowser.storage.local)
+    vi.spyOn(fakeBrowser.storage.local, 'get').mockImplementation(
+      async (keys) => {
+        if (JSON.stringify(keys).includes('ratings:a-wine')) {
+          await new Promise((resolve) => setTimeout(resolve, 50))
+        }
+        return get(keys)
+      }
+    )
+
+    const results = await Promise.all([
+      enqueueListFetch('a', 'Wine A', ProductType.Wine),
+      enqueueListFetch('b', 'Test Wine', ProductType.Wine),
+      enqueueListFetch('c', 'Wine C', ProductType.Wine)
+    ])
+
+    expect(results).toHaveLength(3)
+    expect(requested).toEqual(['a', 'c'])
   })
 })

@@ -1,12 +1,11 @@
 import eslint from '@eslint/js';
-import tseslint from 'typescript-eslint';
 import perfectionist from 'eslint-plugin-perfectionist';
+import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
     ignores: [
       '**/*.js',
-      '**/*.mjs',
       '.output/**',
       '.wxt/**',
       'playwright-report/**',
@@ -19,7 +18,10 @@ export default tseslint.config(
   {
     languageOptions: {
       parserOptions: {
-        projectService: true,
+        projectService: {
+          // Not part of the TypeScript project, but still worth linting.
+          allowDefaultProject: ['eslint.config.mjs'],
+        },
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -27,5 +29,12 @@ export default tseslint.config(
       'no-console': 'error',
     },
   },
-  perfectionist.configs['recommended-natural']
+  perfectionist.configs['recommended-natural'],
+  {
+    // This file isn't type-checked by tsc, and the type-aware rules only have
+    // the plugins' own declarations to work from — which yields findings about
+    // eslint's and perfectionist's typings rather than about this config.
+    extends: [tseslint.configs.disableTypeChecked],
+    files: ['**/*.mjs'],
+  }
 );
