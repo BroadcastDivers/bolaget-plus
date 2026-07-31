@@ -7,6 +7,10 @@ export default tseslint.config(
     ignores: [
       '**/*.js',
       '**/*.mjs',
+      // Local-only scratch dirs: git worktrees and demo captures. They hold
+      // full checkouts, so linting them reports another copy of the codebase.
+      '.claude/**',
+      '.demo/**',
       '.output/**',
       '.wxt/**',
       'playwright-report/**',

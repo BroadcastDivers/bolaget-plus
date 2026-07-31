@@ -57,18 +57,48 @@ describe('enqueueListFetch', () => {
     expect(sendMessage).not.toHaveBeenCalled()
   })
 
+  // On Chrome the Algolia queries run in the content script — that is what
+  // keeps algolia.net out of the manifest — so a cache miss goes straight to
+  // the network rather than through the background script.
   it('falls through to the throttled fetch when nothing is cached', async () => {
-    const sendMessage = vi
-      .spyOn(fakeBrowser.runtime, 'sendMessage')
-      .mockResolvedValue(rating)
-
-    const result = await enqueueListFetch('456', 'Other Wine', ProductType.Wine)
-
-    expect(result).toEqual(rating)
-    expect(sendMessage).toHaveBeenCalledTimes(1)
-    // List-page lookups never ask for label thumbnails.
-    expect(sendMessage).toHaveBeenCalledWith(
-      expect.objectContaining({ includeImage: false, productId: '456' })
+    const sendMessage = vi.spyOn(fakeBrowser.runtime, 'sendMessage')
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          hits: [
+            {
+              id: 7,
+              name: 'Crianza',
+              statistics: { ratings_average: 4.1, ratings_count: 1200 },
+              vintages: [{ id: 71, statistics: { ratings_count: 900 } }],
+              winery: { name: 'El Coto' }
+            }
+          ],
+          nbHits: 5
+        })
+      )
     )
+    vi.stubGlobal('fetch', fetchMock)
+
+    try {
+      const result = await enqueueListFetch(
+        '456',
+        'El Coto Crianza',
+        ProductType.Wine
+      )
+
+      expect(result.status).toBe(RatingResultStatus.Found)
+      expect(result.link).toBe('https://www.vivino.com/wines/71')
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+      const [requested] = fetchMock.mock.calls[0]
+      const requestedUrl =
+        requested instanceof Request ? requested.url : requested.toString()
+      expect(requestedUrl).toContain('algolia.net')
+      // List-page lookups never render thumbnails, so the background is never
+      // asked to download one.
+      expect(sendMessage).not.toHaveBeenCalled()
+    } finally {
+      vi.unstubAllGlobals()
+    }
   })
 })
