@@ -1,12 +1,16 @@
 import browser from 'webextension-polyfill'
 
 import {
+  ImageRequest,
   ProductType,
   RatingRequest,
   RatingResponse,
-  RatingResultStatus
+  RatingResultStatus,
+  SearchConfigRequest,
+  UntappdSearchConfig
 } from '@/@types/types'
 
+import { fetchRatingFromUntappd, fetchRatingFromVivino } from './api'
 import { saveRating as cacheRating, tryGetRating } from './ratingsCache'
 
 export async function fetchRating(
@@ -26,10 +30,7 @@ export async function fetchRating(
     ) {
       return cachedRating
     }
-    const response = await browser.runtime.sendMessage<
-      RatingRequest,
-      RatingResponse
-    >(ratingRequest)
+    const response = await fetchFromSource(ratingRequest)
 
     if (
       response.status !== RatingResultStatus.NotFound &&
@@ -41,6 +42,51 @@ export async function fetchRating(
   } catch {
     return { status: RatingResultStatus.NotFound } as RatingResponse
   }
+}
+
+// Both lookups are Algolia queries, and Algolia serves any origin. On Chrome a
+// content script's cross-origin fetch is an ordinary CORS request, so running
+// them here needs no host permission at all — which is what keeps algolia.net
+// out of the manifest and out of the install prompt. Firefox works
+// differently: it routes content-script requests through the extension's
+// principal and blocks any host missing from `permissions` whatever CORS says,
+// so that build hands the whole lookup to the background instead.
+async function fetchFromSource(
+  ratingRequest: RatingRequest
+): Promise<RatingResponse> {
+  if (import.meta.env.FIREFOX) {
+    return await browser.runtime.sendMessage<RatingRequest, RatingResponse>(
+      ratingRequest
+    )
+  }
+
+  if (ratingRequest.query === ProductType.Wine) {
+    return await fetchRatingFromVivino(
+      ratingRequest.productName,
+      ratingRequest.includeImage ?? true,
+      fetchImageViaBackground
+    )
+  }
+
+  const config = await browser.runtime.sendMessage<
+    SearchConfigRequest,
+    UntappdSearchConfig
+  >({ type: 'untappdSearchConfig' })
+  return await fetchRatingFromUntappd(ratingRequest.productName, config)
+}
+
+// Label thumbnails stay a background job even on Chrome: images.vivino.com
+// sends no CORS headers, and the page CSP blocks hotlinking them anyway.
+async function fetchImageViaBackground(
+  url: string | undefined
+): Promise<string | undefined> {
+  if (!url) {
+    return undefined
+  }
+  return await browser.runtime.sendMessage<ImageRequest, string | undefined>({
+    type: 'vivinoImage',
+    url
+  })
 }
 
 function isMissingImages(rating: RatingResponse, type: ProductType): boolean {

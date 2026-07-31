@@ -6,15 +6,24 @@ import {
   RatingResponse,
   RatingResultStatus,
   UntappdHit,
+  UntappdSearchConfig,
   UntappdSearchJSON,
   VivinoHit,
   VivinoSearchJSON
 } from '@/@types/types'
 
-// Untappd's search page renders results client-side via Algolia; these are the
-// public search-only credentials it ships to anonymous visitors.
-const UNTAPPD_ALGOLIA_APP_ID = '9WBO4RQ3HO'
-const UNTAPPD_ALGOLIA_SEARCH_KEY = '1d347324d67ec472bb7132c66aead485'
+// Untappd's search page renders results client-side via Algolia, so the HTML
+// carries no beers — but it does carry the search-only credentials its own JS
+// uses, in a `window.UNTAPPD_SEARCH_CONFIG` blob. We read them from there at
+// runtime rather than pinning them, so a rotated key heals itself.
+const UNTAPPD_SEARCH_CONFIG_MARKER = 'window.UNTAPPD_SEARCH_CONFIG'
+
+// Used only when that read fails (offline, markup change). Values as shipped
+// by untappd.com; stale ones surface as an Uncertain card, never a wrong one.
+const UNTAPPD_FALLBACK_CONFIG: UntappdSearchConfig = {
+  appId: '9WBO4RQ3HO',
+  searchKey: '1d347324d67ec472bb7132c66aead485'
+}
 
 // Vivino's search box is also Algolia-backed with public search-only
 // credentials shipped to anonymous visitors. The WINES_prod index has far
@@ -134,13 +143,59 @@ const WINERY_COMPANY_WORDS = new Set([
   'winzer'
 ])
 
+// Fetched by the background script because the systembolaget.se page CSP
+// (img-src) blocks hotlinking Vivino's image hosts; a data: URL is allowed.
+export async function fetchImageAsDataUrl(
+  url: string | undefined
+): Promise<string | undefined> {
+  if (!url) {
+    return undefined
+  }
+  try {
+    const response = await fetch(url, {
+      signal: AbortSignal.timeout(IMAGE_FETCH_TIMEOUT_MS)
+    })
+    if (!response.ok) {
+      return undefined
+    }
+    const contentType = response.headers.get('content-type') ?? 'image/png'
+    const bytes = new Uint8Array(await response.arrayBuffer())
+    let binary = ''
+    const chunkSize = 8192
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
+    }
+    return `data:${contentType};base64,${btoa(binary)}`
+  } catch {
+    return undefined
+  }
+}
+
+// Runs in the *content script* on Chrome, not the background. Algolia serves
+// any origin (it is a browser-side search product), so this is an ordinary
+// CORS request needing no host permission — which is why algolia.net is absent
+// from the Chrome manifest and users are never asked to approve it.
 export async function fetchRatingFromUntappd(
-  productName: string
+  productName: string,
+  config: UntappdSearchConfig
 ): Promise<RatingResponse> {
-  const url = `https://${UNTAPPD_ALGOLIA_APP_ID.toLowerCase()}-dsn.algolia.net/1/indexes/beer/query`
+  // Credentials go in the query string with a text/plain body to keep the
+  // request CORS-"simple": no preflight, so a lookup costs one round trip.
+  const credentials = new URLSearchParams({
+    'x-algolia-api-key': config.searchKey,
+    'x-algolia-application-id': config.appId
+  })
+  const url = `https://${config.appId.toLowerCase()}-dsn.algolia.net/1/indexes/beer/query?${credentials.toString()}`
   const searchFallbackUrl = `https://untappd.com/search?q=${encodeURIComponent(
     productName
   )}&type=beer&sort=all`
+  // A rejected key or a network blip is not a definitive miss: hand over a
+  // working Untappd search link and mark it transient so it never gets cached.
+  const uncertainFallback = {
+    link: searchFallbackUrl,
+    status: RatingResultStatus.Uncertain,
+    transient: true
+  } as RatingResponse
 
   try {
     const response = await fetch(url, {
@@ -151,15 +206,13 @@ export async function fetchRatingFromUntappd(
         }).toString()
       }),
       headers: {
-        'Content-Type': 'application/json',
-        'X-Algolia-API-Key': UNTAPPD_ALGOLIA_SEARCH_KEY,
-        'X-Algolia-Application-Id': UNTAPPD_ALGOLIA_APP_ID
+        'Content-Type': 'text/plain'
       },
       method: 'POST'
     })
 
     if (!response.ok) {
-      return { status: RatingResultStatus.NotFound } as RatingResponse
+      return uncertainFallback
     }
 
     const data = (await response.json()) as UntappdSearchJSON
@@ -212,13 +265,21 @@ export async function fetchRatingFromUntappd(
       votes: bestMatch.votes
     } as BeerResponse
   } catch {
-    return { status: RatingResultStatus.NotFound } as RatingResponse
+    return uncertainFallback
   }
 }
 
+// Like the Untappd lookup, this runs in the content script on Chrome so that
+// Vivino's Algolia host needs no permission. Label images are the exception:
+// images.vivino.com sends no CORS headers and the systembolaget.se page CSP
+// blocks hotlinking them, so downloading one stays a background job and is
+// injected here as `fetchImage`.
 export async function fetchRatingFromVivino(
   query: string,
-  includeImage = true
+  includeImage = true,
+  fetchImage: (
+    url: string | undefined
+  ) => Promise<string | undefined> = fetchImageAsDataUrl
 ): Promise<RatingResponse> {
   const url = `https://${VIVINO_ALGOLIA_APP_ID.toLowerCase()}-dsn.algolia.net/1/indexes/WINES_prod/query`
   // Even Algolia misses some wines (obscure producers, new releases). Instead
@@ -321,7 +382,7 @@ export async function fetchRatingFromVivino(
       if (includeImage) {
         await Promise.all(
           top.map(async (wine) => {
-            wine.imageDataUrl = await fetchImageAsDataUrl(wine.imageUrl)
+            wine.imageDataUrl = await fetchImage(wine.imageUrl)
           })
         )
       }
@@ -331,7 +392,7 @@ export async function fetchRatingFromVivino(
     // Return only the response contract — similarityRate/imageUrl are internal.
     return {
       imageDataUrl: includeImage
-        ? await fetchImageAsDataUrl(bestMatch.imageUrl)
+        ? await fetchImage(bestMatch.imageUrl)
         : undefined,
       link: bestMatch.link,
       name: bestMatch.name,
@@ -341,6 +402,21 @@ export async function fetchRatingFromVivino(
     }
   } catch {
     return { ...uncertainFallback, transient: true }
+  }
+}
+
+// Reads the Algolia credentials out of Untappd's search page. Runs in the
+// background script: untappd.com sends no CORS headers, so only the extension
+// (which declares untappd.com) can fetch it.
+export async function fetchUntappdSearchConfig(): Promise<UntappdSearchConfig> {
+  try {
+    const response = await fetch('https://untappd.com/search?type=beer')
+    if (!response.ok) {
+      return UNTAPPD_FALLBACK_CONFIG
+    }
+    return parseSearchConfig(await response.text()) ?? UNTAPPD_FALLBACK_CONFIG
+  } catch {
+    return UNTAPPD_FALLBACK_CONFIG
   }
 }
 
@@ -357,34 +433,6 @@ function distinctiveTokens(text: string): string[] {
         !/^\d+$/.test(token) &&
         !GENERIC_WINE_WORDS.has(token)
     )
-}
-
-// Fetched by the background script because the systembolaget.se page CSP
-// (img-src) blocks hotlinking Vivino's image hosts; a data: URL is allowed.
-async function fetchImageAsDataUrl(
-  url: string | undefined
-): Promise<string | undefined> {
-  if (!url) {
-    return undefined
-  }
-  try {
-    const response = await fetch(url, {
-      signal: AbortSignal.timeout(IMAGE_FETCH_TIMEOUT_MS)
-    })
-    if (!response.ok) {
-      return undefined
-    }
-    const contentType = response.headers.get('content-type') ?? 'image/png'
-    const bytes = new Uint8Array(await response.arrayBuffer())
-    let binary = ''
-    const chunkSize = 8192
-    for (let i = 0; i < bytes.length; i += chunkSize) {
-      binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize))
-    }
-    return `data:${contentType};base64,${btoa(binary)}`
-  } catch {
-    return undefined
-  }
 }
 
 // Lowercases and folds diacritics and punctuation so cosmetic spelling
@@ -406,6 +454,44 @@ function normalizeImageUrl(url: null | string | undefined): string | undefined {
     return undefined
   }
   return url.startsWith('//') ? `https:${url}` : url
+}
+
+// Extracts the JSON object assigned to `window.UNTAPPD_SEARCH_CONFIG`. Brace
+// matching rather than a regex: the blob holds nested objects, and a lazy
+// `\{.*?\}` would stop at the first inner brace.
+function parseSearchConfig(html: string): null | UntappdSearchConfig {
+  const marker = html.indexOf(UNTAPPD_SEARCH_CONFIG_MARKER)
+  if (marker === -1) {
+    return null
+  }
+  const start = html.indexOf('{', marker)
+  if (start === -1) {
+    return null
+  }
+
+  let depth = 0
+  let escaped = false
+  let inString = false
+  for (let i = start; i < html.length; i++) {
+    const char = html.charAt(i)
+    if (escaped) {
+      escaped = false
+    } else if (char === '\\') {
+      escaped = true
+    } else if (char === '"') {
+      inString = !inString
+    } else if (inString) {
+      continue
+    } else if (char === '{') {
+      depth++
+    } else if (char === '}') {
+      depth--
+      if (depth === 0) {
+        return toSearchConfig(html.slice(start, i + 1))
+      }
+    }
+  }
+  return null
 }
 
 // True when every distinctive token of the winery name appears in the query
@@ -458,6 +544,20 @@ function toAlternatives(
         ? [{ imageDataUrl, link, name, rating, votes }]
         : []
     )
+}
+
+function toSearchConfig(json: string): null | UntappdSearchConfig {
+  try {
+    const parsed = JSON.parse(json) as Partial<UntappdSearchConfig>
+    // `autocompleteSearchKey` sits in the same blob but drives the search
+    // box's suggestions — the beer index wants `searchKey`.
+    if (!parsed.appId || !parsed.searchKey) {
+      return null
+    }
+    return { appId: parsed.appId, searchKey: parsed.searchKey }
+  } catch {
+    return null
+  }
 }
 
 // vivino.com/wines/{id} resolves by vintage id, not wine id (see the

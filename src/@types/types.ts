@@ -15,6 +15,14 @@ export type BeerResponse = RatingResponse & {
   brewery: null | string
 }
 
+// Asks the background script to download a Vivino label thumbnail as a data
+// URL. images.vivino.com sends no CORS headers and the page CSP blocks
+// hotlinking it, so the content script cannot do this itself.
+export interface ImageRequest {
+  type: 'vivinoImage'
+  url: string
+}
+
 export interface RatingAlternative {
   imageDataUrl?: string
   link: string
@@ -46,6 +54,12 @@ export interface RatingResponse {
   votes: number
 }
 
+// Asks the background script for Untappd's current Algolia credentials; the
+// content script cannot read untappd.com itself (no CORS there).
+export interface SearchConfigRequest {
+  type: 'untappdSearchConfig'
+}
+
 export interface UntappdHit {
   beer_name: string
   beer_slug: string
@@ -54,6 +68,14 @@ export interface UntappdHit {
   brewery_name: null | string
   rating_count: null | number
   rating_score: null | number
+}
+
+// The Algolia app/key pair Untappd's own search page uses. The app id also
+// determines the search host (`{appId}-dsn.algolia.net`), so reading it at
+// runtime keeps us working across a key rotation *and* an app migration.
+export interface UntappdSearchConfig {
+  appId: string
+  searchKey: string
 }
 
 export interface UntappdSearchJSON {

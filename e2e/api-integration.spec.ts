@@ -1,9 +1,27 @@
 import { test, expect } from '@playwright/test';
-import { fetchRatingFromVivino, fetchRatingFromUntappd } from '../src/components/api';
-import { RatingResultStatus } from '../src/@types/types';
+import { fetchRatingFromVivino, fetchRatingFromUntappd, fetchUntappdSearchConfig } from '../src/components/api';
+import { RatingResultStatus, UntappdSearchConfig } from '../src/@types/types';
 import type { VivinoHit } from '../src/@types/types';
 
+// The credentials Untappd's search page is shipping right now. Reading them
+// live is the point: if their markup changes, these tests fail instead of the
+// extension silently falling back to a pinned key that may be rotated out.
+const liveConfig: UntappdSearchConfig = {
+  appId: '9WBO4RQ3HO',
+  searchKey: '1d347324d67ec472bb7132c66aead485'
+};
+
 test.describe('API Integration Tests', () => {
+  test('fetchUntappdSearchConfig reads live credentials from untappd.com', async () => {
+    const config = await fetchUntappdSearchConfig();
+
+    expect(config.appId).toMatch(/^[0-9A-Z]{10}$/);
+    expect(config.searchKey).toMatch(/^[0-9a-f]{32}$/);
+    // Copy them onto the shared object so the lookups below use whatever is
+    // live, not a hardcoded pair.
+    Object.assign(liveConfig, config);
+  });
+
   test('fetchRatingFromVivino returns data for valid query', async () => {
     const result = await fetchRatingFromVivino('Bread & Butter');
 
@@ -27,7 +45,7 @@ test.describe('API Integration Tests', () => {
   });
 
   test('fetchRatingFromUntappd returns data for valid query', async () => {
-    const result = await fetchRatingFromUntappd('Pabst Blue Ribbon');
+    const result = await fetchRatingFromUntappd('Pabst Blue Ribbon', liveConfig);
 
     expect(result).not.toBeNull();
     expect(result?.status).toBe(RatingResultStatus.Found);
@@ -37,7 +55,7 @@ test.describe('API Integration Tests', () => {
   });
 
   test('fetchRatingFromUntappd returns data for a cider query', async () => {
-    const result = await fetchRatingFromUntappd('Rekorderlig Päron');
+    const result = await fetchRatingFromUntappd('Rekorderlig Päron', liveConfig);
 
     expect(result).not.toBeNull();
     expect(result?.status).toBe(RatingResultStatus.Found);
@@ -662,7 +680,7 @@ test.describe('Untappd lookup misses (mocked fetch)', () => {
           })
       } as Response)) as typeof fetch;
 
-    const result = await fetchRatingFromUntappd('Mystery Brew IPA');
+    const result = await fetchRatingFromUntappd('Mystery Brew IPA', liveConfig);
 
     expect(result.status).toBe(RatingResultStatus.Uncertain);
     expect(result.link).toContain('untappd.com/search');

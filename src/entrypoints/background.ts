@@ -1,7 +1,17 @@
 import browser from 'webextension-polyfill'
 
-import { ProductType, type RatingRequest } from '@/@types/types'
-import { fetchRatingFromUntappd, fetchRatingFromVivino } from '@/components/api'
+import {
+  type ImageRequest,
+  ProductType,
+  type RatingRequest,
+  type SearchConfigRequest
+} from '@/@types/types'
+import {
+  fetchImageAsDataUrl,
+  fetchRatingFromUntappd,
+  fetchRatingFromVivino
+} from '@/components/api'
+import { getSearchConfig } from '@/components/searchConfigCache'
 
 export default defineBackground(() => {
   // console.log('Running with id:', { id: browser.runtime.id })
@@ -16,7 +26,37 @@ function isGetRatingMessage(message: unknown): message is RatingRequest {
   )
 }
 
+function isImageMessage(message: unknown): message is ImageRequest {
+  return (
+    typeof message === 'object' &&
+    message !== null &&
+    'type' in message &&
+    message.type === 'vivinoImage'
+  )
+}
+
+function isSearchConfigMessage(
+  message: unknown
+): message is SearchConfigRequest {
+  return (
+    typeof message === 'object' &&
+    message !== null &&
+    'type' in message &&
+    message.type === 'untappdSearchConfig'
+  )
+}
+
 browser.runtime.onMessage.addListener(async (message: unknown) => {
+  // On Chrome the content script queries Algolia itself, so the only thing it
+  // needs from here is the credentials; beer and cider never reach the switch
+  // below. Firefox blocks content-script requests to hosts outside
+  // `permissions`, so that build routes the whole lookup through here instead.
+  if (isSearchConfigMessage(message)) {
+    return await getSearchConfig()
+  }
+  if (isImageMessage(message)) {
+    return await fetchImageAsDataUrl(message.url)
+  }
   if (!isGetRatingMessage(message)) {
     return
   }
@@ -24,7 +64,7 @@ browser.runtime.onMessage.addListener(async (message: unknown) => {
   switch (query) {
     case ProductType.Beer:
     case ProductType.Cider:
-      return await fetchRatingFromUntappd(productName)
+      return await fetchRatingFromUntappd(productName, await getSearchConfig())
     case ProductType.Wine:
       return await fetchRatingFromVivino(productName, includeImage ?? true)
   }
