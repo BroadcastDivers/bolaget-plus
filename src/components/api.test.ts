@@ -1,7 +1,23 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { BeerResponse, RatingResultStatus } from '@/@types/types'
-import { fetchRatingFromUntappd, fetchRatingFromVivino } from '@/components/api'
+import {
+  BeerResponse,
+  RatingResultStatus,
+  UntappdSearchConfig
+} from '@/@types/types'
+import {
+  fetchRatingFromUntappd,
+  fetchRatingFromVivino,
+  fetchUntappdSearchConfig
+} from '@/components/api'
+
+// The beer lookup takes Untappd's Algolia credentials as an argument — the
+// background reads the live pair off untappd.com, so unit tests hand it a
+// fixed stand-in.
+const searchConfig: UntappdSearchConfig = {
+  appId: '9WBO4RQ3HO',
+  searchKey: 'test-search-key'
+}
 
 const fetchMock = vi.fn<typeof fetch>()
 vi.stubGlobal('fetch', fetchMock)
@@ -169,7 +185,10 @@ describe('fetchRatingFromUntappd', () => {
       })
     )
 
-    const result = await fetchRatingFromUntappd('Pabst Blue Ribbon')
+    const result = await fetchRatingFromUntappd(
+      'Pabst Blue Ribbon',
+      searchConfig
+    )
 
     expect(result.status).toBe(RatingResultStatus.Found)
     expect(result.rating).toBe(2.9)
@@ -197,7 +216,7 @@ describe('fetchRatingFromUntappd', () => {
       })
     )
 
-    const result = await fetchRatingFromUntappd('Rare Beer')
+    const result = await fetchRatingFromUntappd('Rare Beer', searchConfig)
 
     expect(result.status).toBe(RatingResultStatus.Found)
     expect(result.rating).toBe(0)
@@ -221,7 +240,10 @@ describe('fetchRatingFromUntappd', () => {
       })
     )
 
-    const result = await fetchRatingFromUntappd('Mellanmust Julebrygd')
+    const result = await fetchRatingFromUntappd(
+      'Mellanmust Julebrygd',
+      searchConfig
+    )
 
     expect(result.status).toBe(RatingResultStatus.Uncertain)
     expect(result.link).toContain('untappd.com/search')
@@ -231,7 +253,10 @@ describe('fetchRatingFromUntappd', () => {
   it('returns not found for an empty result set', async () => {
     fetchMock.mockResolvedValueOnce(jsonResponse({ hits: [] }))
 
-    const result = await fetchRatingFromUntappd('Nonexistent Beer')
+    const result = await fetchRatingFromUntappd(
+      'Nonexistent Beer',
+      searchConfig
+    )
 
     expect(result.status).toBe(RatingResultStatus.NotFound)
   })
@@ -239,7 +264,10 @@ describe('fetchRatingFromUntappd', () => {
   it('marks HTTP errors as transient so they are never cached', async () => {
     fetchMock.mockResolvedValueOnce(new Response('', { status: 429 }))
 
-    const result = await fetchRatingFromUntappd('Pabst Blue Ribbon')
+    const result = await fetchRatingFromUntappd(
+      'Pabst Blue Ribbon',
+      searchConfig
+    )
 
     expect(result.status).toBe(RatingResultStatus.Uncertain)
     expect(result.transient).toBe(true)
@@ -249,9 +277,72 @@ describe('fetchRatingFromUntappd', () => {
   it('marks network failures as transient', async () => {
     fetchMock.mockRejectedValueOnce(new Error('network down'))
 
-    const result = await fetchRatingFromUntappd('Pabst Blue Ribbon')
+    const result = await fetchRatingFromUntappd(
+      'Pabst Blue Ribbon',
+      searchConfig
+    )
 
     expect(result.status).toBe(RatingResultStatus.Uncertain)
     expect(result.transient).toBe(true)
+  })
+})
+
+describe('fetchUntappdSearchConfig', () => {
+  // Untappd ships the credentials its own search JS uses in a JSON blob on
+  // the search page. Reading them at runtime is what lets a rotated key heal
+  // itself, so the parser has to survive their markup.
+  function searchPage(config: string): Response {
+    return new Response(
+      `<html><body><script>window.UNTAPPD_SEARCH_CONFIG = ${config};</script></body></html>`
+    )
+  }
+
+  it('reads the app id and search key off the search page', async () => {
+    fetchMock.mockResolvedValueOnce(
+      searchPage(
+        JSON.stringify({
+          appId: 'NEWAPPID12',
+          autocompleteSearchKey: 'not-the-one-we-want',
+          searchKey: 'rotated-key'
+        })
+      )
+    )
+
+    const config = await fetchUntappdSearchConfig()
+
+    expect(config).toEqual({ appId: 'NEWAPPID12', searchKey: 'rotated-key' })
+  })
+
+  it('stops at the matching brace, not the first nested one', async () => {
+    fetchMock.mockResolvedValueOnce(
+      searchPage(
+        JSON.stringify({
+          appId: 'NESTED1234',
+          filters: { beer: { abv: [0, 100] } },
+          searchKey: 'nested-key'
+        })
+      )
+    )
+
+    const config = await fetchUntappdSearchConfig()
+
+    expect(config.searchKey).toBe('nested-key')
+  })
+
+  it('falls back to the pinned pair when the blob is missing', async () => {
+    fetchMock.mockResolvedValueOnce(new Response('<html>no config here</html>'))
+
+    const config = await fetchUntappdSearchConfig()
+
+    expect(config.appId).toBe('9WBO4RQ3HO')
+    expect(config.searchKey).toMatch(/^[0-9a-f]{32}$/)
+  })
+
+  it('falls back when the request fails outright', async () => {
+    fetchMock.mockRejectedValueOnce(new Error('offline'))
+
+    const config = await fetchUntappdSearchConfig()
+
+    expect(config.appId).toBe('9WBO4RQ3HO')
   })
 })
