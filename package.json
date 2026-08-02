@@ -34,6 +34,7 @@
     "@wxt-dev/auto-icons": "^1.1.2",
     "eslint": "^9.39.4",
     "eslint-plugin-perfectionist": "^4.15.1",
+    "happy-dom": "^20.11.1",
     "playwright": "^1.61.0",
     "prettier": "^3.8.4",
     "simple-git-hooks": "^2.13.1",
