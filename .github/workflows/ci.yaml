@@ -1,6 +1,13 @@
-name: PR Validation
+name: CI
 
+# Everything here is deterministic: no live Systembolaget, Vivino or Untappd
+# calls, so a red run means this repository is broken. That is what makes it
+# safe to put on the README badge. The tests that do hit those sites run in
+# playwright.yml on a nightly schedule.
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
@@ -9,6 +16,7 @@ permissions:
   contents: read
 
 jobs:
+  # Keep this job id stable — branch protection matches required checks on it.
   validate:
     runs-on: ubuntu-latest
     steps:
@@ -21,19 +29,23 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
       - run: pnpm install
-      
+
       - name: Check types
         run: pnpm compile
-        
+
       - name: Check formatting
         run: pnpm ft:check
-        
+
       - name: Lint code
         run: pnpm lint
 
       - name: Unit tests
         run: pnpm test:unit
 
+      # Mocked-fetch API regression tests. They never use the browser fixture,
+      # so Playwright needs no browser download here.
+      - name: API matching tests
+        run: pnpm test:matching
+
       - name: Build project
         run: pnpm build:chrome
- 

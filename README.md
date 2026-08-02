@@ -1,6 +1,6 @@
 # Bolaget+
 
-[![GitHub Release](https://img.shields.io/github/release/BroadcastDivers/bolaget-plus.svg?style=flat)]() [![Playwright Tests](https://github.com/BroadcastDivers/bolaget-plus/actions/workflows/playwright.yml/badge.svg)](https://github.com/BroadcastDivers/bolaget-plus/actions/workflows/playwright.yml)
+[![GitHub Release](https://img.shields.io/github/release/BroadcastDivers/bolaget-plus.svg?style=flat)]() [![CI](https://github.com/BroadcastDivers/bolaget-plus/actions/workflows/ci.yaml/badge.svg?branch=main&event=push)](https://github.com/BroadcastDivers/bolaget-plus/actions/workflows/ci.yaml)
 
 A browser plugin for Systembolaget.se that shows ratings directly at systembolagets website!
 
@@ -52,16 +52,20 @@ pnpm dev:chrome
 
 ### Testing
 
-Run the unit tests (fast, no network):
+Run the checks CI gates on (fast, no network):
 
 ```sh
-pnpm test:unit
+pnpm test:unit       # vitest unit tests
+pnpm test:matching   # mocked-fetch Vivino/Untappd matching regressions
 ```
 
-Run the end-to-end tests (builds the extension, then drives it against the live sites with Playwright):
+Run the smoke tests (builds the extension, then drives it against the live
+Systembolaget/Vivino/Untappd sites with Playwright). These depend on those
+sites' current markup and availability, so they are expected to be flaky and
+run nightly rather than on every push:
 
 ```sh
-pnpm test
+pnpm test:smoke
 ```
 
 ### Building
