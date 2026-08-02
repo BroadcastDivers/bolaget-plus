@@ -73,7 +73,9 @@ external fetches are delegated to the background script.
    `/produkt/ol/`, `/produkt/cider-blanddrycker/`), extracts the product name
    from the `<h1>` (or from a card's text lines), and gates wine on
    `isBottle()` (Vivino only rates bottles, not box/bag-in-box/etc. — see the
-   exclusion-list note in that file).
+   exclusion-list note in that file). `isCardBottle()` applies the same gate to
+   list cards, reading the packaging from the `__NEXT_DATA__` payload when the
+   card's product is in it and falling back to the card's own detail lines.
 3. `ratingService.fetchRating` checks the local cache first
    (`ratingsCache.ts`), otherwise sends a `RatingRequest` message to the
    background script and caches responses that are neither `NotFound` nor
@@ -127,9 +129,12 @@ hardcoded strings.
 ## Testing notes
 
 Unit tests (`src/**/*.test.ts`, vitest with WXT's `WxtVitest` plugin) cover
-the matching logic in `api.ts` against fixture Algolia responses and the cache
-against `fakeBrowser` storage — run them with `pnpm test:unit`; they need no
-network and are the first thing to extend when touching matching rules.
+the matching logic in `api.ts` against fixture Algolia responses, the cache
+against `fakeBrowser` storage, and the list-card parsing in `productUtils.ts`
+against synthetic card markup — run them with `pnpm test:unit`; they need no
+network and are the first thing to extend when touching matching rules. Tests
+that need a DOM opt in per file with a `// @vitest-environment happy-dom`
+docblock; the default environment stays `node`.
 
 The Playwright tests in `e2e/` are split into three projects
 (`playwright.config.ts`), divided by whether they touch the network:

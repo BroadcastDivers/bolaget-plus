@@ -70,6 +70,15 @@ async function handleListCard(card: Element) {
   const name = productUtils.getCardName(card)
   if (!productId || !name) return
 
+  // Vivino only rates bottled wine, same as on the product page — leave the
+  // card untouched rather than badge a box with a bottle's rating.
+  if (
+    productType === ProductType.Wine &&
+    !productUtils.isCardBottle(card, productId)
+  ) {
+    return
+  }
+
   const spinner = domUtils.injectCardSpinner(card, productId)
   if (!spinner) return
 

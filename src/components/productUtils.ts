@@ -14,12 +14,8 @@ export function getCardName(card: Element): null | string {
   // subtitle/vintage are the lines directly above it. Systembolaget's class
   // names are hashed build artifacts (monopol-*, css-*) and reshuffle
   // between deploys, so text structure is the only stable thing to hold on to.
-  const lines = (card as HTMLElement).innerText
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
-  const nrPattern = new RegExp(`^Nr\\s*${productId}$`)
-  const nrIndex = lines.findIndex((line) => nrPattern.test(line))
+  const lines = getCardLines(card)
+  const nrIndex = findProductNumberLine(lines, productId)
   if (nrIndex <= 0) return null
 
   let titleLines = lines.slice(Math.max(0, nrIndex - 2), nrIndex)
@@ -107,6 +103,14 @@ const NON_BOTTLE_FORMATS = [
   'pouch'
 ]
 
+// A list card's text is free-form (volume, price, availability, …) rather than
+// a packaging descriptor, so the formats have to match as whole words here:
+// "Bag-in-Box" and "PET" must hit, "Petit" and "fatlagrat" must not.
+const NON_BOTTLE_PATTERN = new RegExp(
+  `(?<![\\p{L}\\p{N}])(?:${NON_BOTTLE_FORMATS.join('|')})(?![\\p{L}\\p{N}])`,
+  'iu'
+)
+
 export function isBottle(): boolean {
   const main = document.querySelector('main')
   if (main == null) {
@@ -123,15 +127,94 @@ export function isBottle(): boolean {
     return true
   }
 
-  return !NON_BOTTLE_FORMATS.some((format) => descriptor.includes(format))
+  return !isNonBottlePackaging(descriptor)
+}
+
+// The list-page counterpart of isBottle(): a card links straight to the product
+// page, so a box wine has to be filtered out here too or the badge shows a
+// rating the product page itself refuses to show.
+export function isCardBottle(card: Element, productId: string): boolean {
+  const packaging = getPackagingFromPageData(productId)
+  if (packaging) {
+    return !isNonBottlePackaging(packaging)
+  }
+
+  // Cards the embedded page data doesn't cover (later result pages, filters
+  // applied after load) only leave their own text. Scan the lines below the
+  // product number — the name and category above it are prose, and a wine
+  // called "Box Wine Co" is not a box.
+  const lines = getCardLines(card)
+  const nrIndex = findProductNumberLine(lines, productId)
+  if (nrIndex < 0) {
+    return true
+  }
+
+  return !NON_BOTTLE_PATTERN.test(lines.slice(nrIndex + 1).join(' '))
 }
 
 export function isListPage(): boolean {
   return window.location.pathname.includes('/sortiment/')
 }
 
+function buildPackagingMap(raw: string): Map<string, string> {
+  const map = new Map<string, string>()
+
+  let root: unknown
+  try {
+    const parsed = JSON.parse(raw) as {
+      props?: { pageProps?: { fallback?: unknown } }
+    }
+    root = parsed.props?.pageProps?.fallback
+  } catch {
+    return map
+  }
+
+  // The fallback is keyed by request URL and shaped differently per page type
+  // (a bare product, a search response, a paged list), so walk it and index
+  // every product object found rather than guessing at the nesting. The node
+  // budget keeps an unexpectedly large payload from stalling the page.
+  const queue: unknown[] = [root]
+  for (let visited = 0; queue.length > 0 && visited < 5000; visited++) {
+    const node = queue.shift()
+    if (typeof node !== 'object' || node === null) {
+      continue
+    }
+    if (Array.isArray(node)) {
+      queue.push(...(node as unknown[]))
+      continue
+    }
+
+    const product = node as {
+      packagingLevel1?: unknown
+      productNumber?: unknown
+    }
+    if (
+      typeof product.productNumber === 'string' &&
+      typeof product.packagingLevel1 === 'string' &&
+      product.packagingLevel1
+    ) {
+      map.set(product.productNumber, product.packagingLevel1.toLowerCase())
+    }
+    queue.push(...(Object.values(node) as unknown[]))
+  }
+
+  return map
+}
+
 function extractProductId(url: string): null | string {
   return /-(\d+)\/?$/.exec(url)?.[1] ?? null
+}
+
+function findProductNumberLine(lines: string[], productId: string): number {
+  const nrPattern = new RegExp(`^Nr\\s*${productId}$`)
+  return lines.findIndex((line) => nrPattern.test(line))
+}
+
+function getCardLines(card: Element): string[] {
+  return (card as HTMLElement).innerText
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
 }
 
 // Reads the packaging type from the format line under the product title, which
@@ -170,49 +253,25 @@ function getPackagingDescriptor(main: HTMLElement): null | string {
   return firstSegment ? firstSegment : null
 }
 
-// Systembolaget embeds the product data of the initially loaded page in
-// Next.js' __NEXT_DATA__ script; "packagingLevel1" is the packaging name
-// ("Flaska", "Box", …). Only trust it when an entry matches the current
-// product id — SPA navigations don't refresh the script.
+// Systembolaget embeds the data of the initially loaded page in Next.js'
+// __NEXT_DATA__ script; "packagingLevel1" is the packaging name ("Flaska",
+// "Box", …). A product page carries one product, a list page the first page of
+// results, so index whatever is there and only trust an entry that matches the
+// product being asked about — SPA navigations don't refresh the script.
+let packagingCache: null | { map: Map<string, string>; raw: string } = null
+
 function getPackagingFromPageData(productId: string): null | string {
   const raw = document.getElementById('__NEXT_DATA__')?.textContent
   if (!raw) {
     return null
   }
 
-  let fallback: Record<string, unknown>
-  try {
-    const parsed = JSON.parse(raw) as {
-      props?: { pageProps?: { fallback?: Record<string, unknown> } }
-    }
-    fallback = parsed.props?.pageProps?.fallback ?? {}
-  } catch {
-    return null
+  if (packagingCache?.raw !== raw) {
+    packagingCache = { map: buildPackagingMap(raw), raw }
   }
-
-  for (const entry of Object.values(fallback)) {
-    if (typeof entry !== 'object' || entry === null) {
-      continue
-    }
-    const product = entry as {
-      packagingLevel1?: null | string
-      productNumber?: null | string
-    }
-    if (product.productNumber !== productId) {
-      continue
-    }
-    const packaging = product.packagingLevel1
-    return typeof packaging === 'string' && packaging
-      ? packaging.toLowerCase()
-      : null
-  }
-  return null
+  return packagingCache.map.get(productId) ?? null
 }
 
-// Products sold in several packagings replace the static format line with a
-// dropdown whose selected value reads "{packaging}, {volume} ml". Read the
-// current selection; requiring a volume keeps unrelated dropdowns (store
-// picker, quantity, …) from being mistaken for it.
 function getSelectedPackaging(main: HTMLElement): null | string {
   for (const el of main.querySelectorAll('select, [role="combobox"]')) {
     // The dropdown's hidden <select> has no options until the app hydrates,
@@ -225,4 +284,15 @@ function getSelectedPackaging(main: HTMLElement): null | string {
     }
   }
   return null
+}
+
+// Products sold in several packagings replace the static format line with a
+// dropdown whose selected value reads "{packaging}, {volume} ml". Read the
+// current selection; requiring a volume keeps unrelated dropdowns (store
+// picker, quantity, …) from being mistaken for it.
+// The packaging descriptor is short and already isolated ("Bag-in-Box",
+// "PET-flaska", "box, 3000 ml"), so a plain substring test is enough — unlike
+// the free-form card text NON_BOTTLE_PATTERN guards.
+function isNonBottlePackaging(descriptor: string): boolean {
+  return NON_BOTTLE_FORMATS.some((format) => descriptor.includes(format))
 }
