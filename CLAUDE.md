@@ -29,19 +29,27 @@ pnpm build:chrome      # build to .output/ (build:firefox for MV2/Firefox)
 pnpm zip:chrome        # package for store submission
 
 pnpm test:unit         # vitest unit tests (src/**/*.test.ts) — fast, no network
-pnpm test              # build:chrome then run full Playwright suite
+pnpm test:matching     # mocked-fetch matching regressions — fast, no network
+pnpm test:smoke        # build:chrome then the live-site + live-API projects
+pnpm test:live         # only the live Vivino/Untappd API spec
+pnpm test              # build:chrome then run every Playwright project
 pnpm test:interactive  # playwright --ui
-pnpm test:api          # only the Vivino/Untappd API-integration spec
 ```
 
 Run a single Playwright test: `pnpm build:chrome && playwright test -g "beer page"`
 (the build step is required — Playwright loads the built extension from
 `.output/`).
 
-CI (`.github/workflows/pr.yaml`) runs `compile`, `ft:check`, `lint`,
-`test:unit`, and `build:chrome` on every PR. The `pre-push` git hook
-(simple-git-hooks) runs `ft` + `lint` — installed automatically on
-`pnpm install`.
+CI (`.github/workflows/ci.yaml`) runs `compile`, `ft:check`, `lint`,
+`test:unit`, `test:matching`, and `build:chrome` on every PR and on push to
+`main`; it is the workflow the README badge reports, and everything in it is
+deterministic. The live-site tests run separately in
+`.github/workflows/playwright.yml` on a nightly cron — keep them out of CI, and
+keep them off the badge, so third-party markup changes don't read as a broken
+build. (That workflow's `schedule:` trigger also means GitHub disables it after
+60 days of repository inactivity; it then has to be re-enabled by hand in the
+Actions tab.) The `pre-push` git hook (simple-git-hooks) runs `ft` + `lint` —
+installed automatically on `pnpm install`.
 
 ## Architecture
 
@@ -123,11 +131,21 @@ the matching logic in `api.ts` against fixture Algolia responses and the cache
 against `fakeBrowser` storage — run them with `pnpm test:unit`; they need no
 network and are the first thing to extend when touching matching rules.
 
-Playwright tests in `e2e/` load the built extension. `end-to-end.spec.ts`
-runs against the **live** Systembolaget site, so it depends on that page's
-current markup and can be flaky — CI retries twice and runs serially; the
-tests must dismiss Systembolaget's age gate ("Jag har fyllt 20 år") and cookie
-banner ("Acceptera alla kakor") before asserting on `#rating-container`.
-`api-integration.spec.ts` mixes a few live Vivino/Untappd queries with
-mocked-`fetch` regression tests for the matching rules. `fixtures.ts`
-provides the `extensionId` fixture.
+The Playwright tests in `e2e/` are split into three projects
+(`playwright.config.ts`), divided by whether they touch the network:
+
+- `matching` (`api-matching.spec.ts`) — mocked-`fetch` regression tests for the
+  matching rules. No network, no browser, ~2 s. Runs in CI.
+- `smoke` (`end-to-end.spec.ts`) — loads the built extension into a headed
+  Chromium and drives the **live** Systembolaget site, so it depends on that
+  page's current markup and can be flaky (retries twice and runs serially on
+  CI). `fixtures.ts` provides the `extensionId` fixture; `systembolaget.ts`
+  provides `openPage`, which dismisses the age gate ("Jag har fyllt 20 år") and
+  cookie banner ("Acceptera alla kakor") tolerantly — a gate that never appears
+  is not an error, so a banner change fails no test on its own.
+- `live-api` (`api-live.spec.ts`) — real queries against Vivino and Untappd,
+  including reading Untappd's search credentials out of its live markup.
+
+Only `matching` belongs in CI. When adding a Playwright test, decide which
+project it lands in first: if it needs a third party to be up, it is a smoke
+test.

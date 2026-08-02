@@ -1,11 +1,19 @@
-name: Playwright Tests
+name: Nightly Smoke Tests
+
+# Drives the live Systembolaget site and queries Vivino/Untappd for real. It
+# fails when those sites change their markup, rate-limit the runner, or are
+# simply down — which is worth knowing about, but says nothing about whether
+# this repository is healthy. So it is deliberately kept off the README badge
+# and off the PR path; CI (ci.yaml) is the build status. Run it by hand from
+# the Actions tab after touching selectors or the matching rules.
+#
+# Note: GitHub disables any workflow with a `schedule:` trigger after 60 days
+# without repository activity. If this stops running, re-enable it in the
+# Actions tab.
 on:
   schedule:
     - cron: '0 1 * * *'
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -29,9 +37,11 @@ jobs:
         run: pnpm playwright install --with-deps
       - name: Build the project
         run: pnpm build:chrome
-      - name: Run Playwright tests
+      # The extension is loaded into a headed Chromium (extensions do not load
+      # in headless mode), hence xvfb.
+      - name: Run smoke tests
         run: |
-          xvfb-run pnpm playwright test
+          xvfb-run pnpm playwright test --project=smoke --project=live-api
         shell: bash
       - uses: actions/upload-artifact@v4
         if: always()

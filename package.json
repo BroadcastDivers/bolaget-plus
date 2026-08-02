@@ -20,7 +20,9 @@
     "lint:fix": "eslint . --fix",
     "test": "pnpm build:chrome && playwright test",
     "test:interactive": "playwright test --ui",
-    "test:api": "pnpm build:chrome && playwright test e2e/api-integration.spec.ts",
+    "test:matching": "playwright test --project=matching",
+    "test:smoke": "pnpm build:chrome && playwright test --project=smoke --project=live-api",
+    "test:live": "playwright test --project=live-api",
     "test:unit": "vitest run"
   },
   "devDependencies": {
